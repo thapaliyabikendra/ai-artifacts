@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ClinicManagementSystem.Application.Contracts/ClinicManagementSystem.Application.Contracts.csproj" />
+    <Project Path="src/ClinicManagementSystem.Application/ClinicManagementSystem.Application.csproj" />
+    <Project Path="src/ClinicManagementSystem.AuthServer/ClinicManagementSystem.AuthServer.csproj" />
+    <Project Path="src/ClinicManagementSystem.DbMigrator/ClinicManagementSystem.DbMigrator.csproj" />
+    <Project Path="src/ClinicManagementSystem.Domain.Shared/ClinicManagementSystem.Domain.Shared.csproj" />
+    <Project Path="src/ClinicManagementSystem.Domain/ClinicManagementSystem.Domain.csproj" />
+    <Project Path="src/ClinicManagementSystem.EntityFrameworkCore/ClinicManagementSystem.EntityFrameworkCore.csproj" />
+    <Project Path="src/ClinicManagementSystem.HttpApi.Client/ClinicManagementSystem.HttpApi.Client.csproj" />
+    <Project Path="src/ClinicManagementSystem.HttpApi.Host/ClinicManagementSystem.HttpApi.Host.csproj" />
+    <Project Path="src/ClinicManagementSystem.HttpApi/ClinicManagementSystem.HttpApi.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/ClinicManagementSystem.Application.Tests/ClinicManagementSystem.Application.Tests.csproj" />
+    <Project Path="test/ClinicManagementSystem.Domain.Tests/ClinicManagementSystem.Domain.Tests.csproj" />
+    <Project Path="test/ClinicManagementSystem.EntityFrameworkCore.Tests/ClinicManagementSystem.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/ClinicManagementSystem.HttpApi.Client.ConsoleTestApp/ClinicManagementSystem.HttpApi.Client.ConsoleTestApp.csproj" />
+    <Project Path="test/ClinicManagementSystem.TestBase/ClinicManagementSystem.TestBase.csproj" />
+  </Folder>
+</Solution>
