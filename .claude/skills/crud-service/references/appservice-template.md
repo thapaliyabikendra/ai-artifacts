@@ -1,22 +1,12 @@
-# Dynamic CRUD Service Generator
+# AppService Template
 
-Generate a complete CRUD service following the TeacherAppService.cs pattern with all standard operations, logging, validation, and export/import capabilities.
+## Table of Contents
+- [AppService Class](#appservice-class)
+- [Interface](#interface)
 
-## Instructions
+## AppService Class
 
-When this skill is invoked, ask the user for the following information:
-
-1. **Entity Name** (singular, e.g., "Product", "Student", "Order")
-2. **Entity Properties** (comma-separated, e.g., "Name:string, Price:decimal, CategoryId:Guid")
-3. **Related Entities** (for joins, e.g., "Category, Supplier")
-4. **Namespace** (e.g., "NotificationBuilder" or "ProductManagement")
-5. **Include Import/Export** (yes/no)
-
-## Generation Template
-
-Generate the following files:
-
-### 1. AppService Class ({EntityName}AppService.cs)
+File: `{EntityName}AppService.cs`
 
 ```csharp
 using AutoMapper;
@@ -307,7 +297,9 @@ public class {EntityName}AppService : ApplicationService, I{EntityName}AppServic
 }
 ```
 
-### 2. Interface (I{EntityName}AppService.cs)
+## Interface
+
+File: `I{EntityName}AppService.cs`
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -331,202 +323,3 @@ public interface I{EntityName}AppService : IApplicationService
     Task<ResponseDataDto<{EntityName}Dto>> GetAsync([Required] Guid id);
 }
 ```
-
-### 3. DTOs
-
-Create the following DTO files:
-
-#### {EntityName}Dto.cs
-```csharp
-using System;
-
-namespace {Namespace}.{EntityNamePlural};
-
-public class {EntityName}Dto
-{
-    public Guid Id { get; set; }
-    // Add entity properties here
-}
-```
-
-#### CreateUpdate{EntityName}Dto.cs
-```csharp
-using System;
-
-namespace {Namespace}.{EntityNamePlural};
-
-public class CreateUpdate{EntityName}Dto
-{
-    // Add entity properties here (without Id)
-}
-```
-
-#### {EntityName}ResponseDto.cs
-```csharp
-using System;
-
-namespace {Namespace}.{EntityNamePlural};
-
-public class {EntityName}ResponseDto
-{
-    public Guid Id { get; set; }
-}
-```
-
-#### {EntityName}Filter.cs
-```csharp
-namespace {Namespace}.{EntityNamePlural};
-
-public class {EntityName}Filter
-{
-    public string SearchKeyword { get; set; }
-    // Add additional filter properties
-}
-```
-
-### 4. Validator ({EntityName}Validator.cs)
-
-```csharp
-using FluentValidation;
-using {Namespace}.{EntityNamePlural};
-
-namespace {Namespace}.Validators;
-
-public class {EntityName}Validator : AbstractValidator<CreateUpdate{EntityName}Dto>
-{
-    public {EntityName}Validator()
-    {
-        // Add validation rules here
-        // Example:
-        // RuleFor(x => x.Name)
-        //     .NotEmpty().WithMessage("Name is required.")
-        //     .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
-    }
-}
-```
-
-## Optional: Export/Import Functionality
-
-If export/import is requested, add these methods to the AppService:
-
-```csharp
-/// <summary>
-/// Exports {entity-name} data in different formats.
-/// </summary>
-public async Task<ResponseDataDto<ExportFileBlobDto>> ExportAsync([FromQuery] {EntityName}ExportRequestDto request)
-{
-    try
-    {
-        _logger.LogInformation("Starting {entity-name} export process with format: {Format}", request.Format);
-
-        var data = await Get{EntityNamePlural}Async(request.Filter ?? default);
-        var list = await AsyncExecuter.ToListAsync(data);
-
-        if (!list.Any())
-        {
-            _logger.LogWarning("No {entity-name} data found for export");
-            throw new UserFriendlyException("No data found to export.", "404");
-        }
-
-        var fileContent = await _mapperService.Export{EntityNamePlural}DataAsync(list, request.Format, request.IncludeHeaders);
-
-        var response = new ExportFileBlobDto
-        {
-            Name = MapperService.GetSheetName(),
-            Content = fileContent
-        };
-
-        _logger.LogInformation("{EntityName} export completed successfully. Format: {Format}, Records: {Count}",
-            request.Format, list.Count);
-
-        return new ResponseDataDto<ExportFileBlobDto>
-        {
-            Success = true,
-            Message = "Export completed successfully.",
-            Code = 200,
-            Data = response
-        };
-    }
-    catch (Exception ex) when (!(ex is UserFriendlyException))
-    {
-        _logger.LogError(ex, "Failed to export {entity-name} data. Error: {ErrorMessage}", ex.Message);
-        throw new UserFriendlyException("An error occurred during export.", "500");
-    }
-}
-
-/// <summary>
-/// Imports {entity-name} data from Excel file.
-/// </summary>
-public async Task<ResponseDataDto<{EntityName}ImportResponseDto>> ImportAsync([FromForm] BulkImportFileDto input, [FromQuery] bool skipHeaderRow = false)
-{
-    var correlationId = Guid.NewGuid().ToString();
-    var startTime = DateTime.UtcNow;
-
-    try
-    {
-        _logger.LogInformation("Starting {entity-name} import process for file: {FileName}", input.File?.FileName);
-
-        if (input?.File == null || input.File.Length == 0)
-        {
-            _logger.LogWarning("Import failed: No file provided or file is empty");
-            throw new UserFriendlyException("No file provided or file is empty.", "400");
-        }
-
-        var fileExtension = Path.GetExtension(input.File.FileName)?.ToLowerInvariant();
-        if (fileExtension != ".xlsx" && fileExtension != ".xls")
-        {
-            throw new UserFriendlyException("Only Excel files (.xlsx, .xls) are supported for import.", "400");
-        }
-
-        var response = await _mapperService.Import{EntityNamePlural}DataAsync(input.File, skipHeaderRow, correlationId);
-
-        var totalDuration = DateTime.UtcNow - startTime;
-        _logger.LogInformation("{EntityName} import completed in {TotalDuration}ms", totalDuration.TotalMilliseconds);
-
-        return new ResponseDataDto<{EntityName}ImportResponseDto>
-        {
-            Success = true,
-            Code = 200,
-            Message = $"Import completed. {response.SuccessCount} records processed successfully.",
-            Data = response
-        };
-    }
-    catch (Exception ex) when (!(ex is UserFriendlyException))
-    {
-        _logger.LogError(ex, "Failed to import {entity-name} data. Error: {ErrorMessage}", ex.Message);
-        throw new UserFriendlyException("An error occurred during import.", "500");
-    }
-}
-```
-
-## Usage Instructions
-
-After generating the files:
-
-1. Register the validator in your dependency injection container
-2. Configure AutoMapper mappings for the entity and DTOs
-3. Add the service to your module's ConfigureServices method
-4. Implement the IMapperService methods if using export/import
-5. Adjust the filtering logic in the private Get{EntityNamePlural}Async method
-6. Update the default sorting field in GetListAsync
-7. Add any additional business logic as needed
-
-## Placeholders to Replace
-
-- `{EntityName}` - Singular entity name (e.g., "Teacher")
-- `{EntityNamePlural}` - Plural entity name (e.g., "Teachers")
-- `{entityName}` - Camel case entity name (e.g., "teacher")
-- `{entityNamePlural}` - Camel case plural (e.g., "teachers")
-- `{entity-name}` - Lowercase with hyphens (e.g., "teacher")
-- `{entity-name-plural}` - Lowercase plural with hyphens (e.g., "teachers")
-- `{entity-name-lowercase}` - Lowercase for route (e.g., "teacher")
-- `{Namespace}` - The application namespace
-
-## Implementation Steps
-
-1. Gather entity information from the user
-2. Generate all necessary files with proper naming
-3. Replace all placeholders with actual values
-4. Create the directory structure if it doesn't exist
-5. Save all files in their appropriate locations
-6. Provide a summary of generated files and next steps
