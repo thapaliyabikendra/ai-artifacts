@@ -15,9 +15,13 @@ ai-artifacts/
 ├── api/                    # .NET Backend (ABP Framework)
 │   ├── src/               # Source projects
 │   └── test/              # Test projects
-├── ui/                    # Frontend (Angular - not yet implemented)
+├── ui/                    # Frontend (React 18+ - planned)
 ├── docs/                  # Business requirements documentation
-└── .claude/skills/        # Claude Code skills for this project
+├── .claude/
+│   ├── agents/            # Specialized sub-agents (12 agents)
+│   ├── skills/            # Domain knowledge skills (20 skills)
+│   └── GUIDELINES.md      # Agent organization rules
+└── CLAUDE.md              # This file
 ```
 
 ## Build Commands
@@ -84,16 +88,74 @@ Application.Contracts → Application → HttpApi → HttpApi.Host
 - **Appointment**: PatientId, DoctorId, AppointmentDate, Description, Status
 - **DoctorSchedule**: DoctorId, DayOfWeek, StartTime, EndTime
 
-Roles: Admin (full control), Doctor (view own appointments/patients), Receptionist (create patients, schedule appointments)
+**Roles**: Admin (full control), Doctor (view own appointments/patients), Receptionist (create patients, schedule appointments)
+
+## Available Sub-Agents
+
+The `.claude/agents/` directory contains 12 specialized agents organized by role:
+
+### Architects
+| Agent | Purpose |
+|-------|---------|
+| `product-architect` | Requirements, user stories, BRD |
+| `backend-architect` | API design, database schema, TSD |
+
+### Engineers
+| Agent | Purpose |
+|-------|---------|
+| `abp-developer` | .NET/ABP Framework backend implementation |
+| `react-developer` | React 18+ frontend with UI/UX |
+| `devops-engineer` | CI/CD, Docker, releases |
+
+### Reviewers
+| Agent | Purpose |
+|-------|---------|
+| `code-reviewer` | Code quality, PR reviews |
+| `security-engineer` | Security audits, STRIDE, OWASP |
+| `qa-engineer` | Test automation (xUnit, Playwright) |
+
+### Specialists
+| Agent | Purpose |
+|-------|---------|
+| `orchestrator` | Multi-agent workflow coordination |
+| `debugger` | Root cause analysis, error diagnosis |
+
+### Language Experts
+| Agent | Purpose |
+|-------|---------|
+| `csharp-pro` | Advanced C#, .NET 10 patterns |
+| `typescript-pro` | Advanced TypeScript, React types |
+
+**Usage**: `Use the engineers/abp-developer agent to implement the Patient service`
 
 ## Available Skills
 
-The `.claude/skills/` directory contains specialized skills:
+The `.claude/skills/` directory contains domain knowledge skills:
 
-- **crud-service**: Generate ABP CRUD services with DTOs, validators, and AppServices
-- **docker-dotnet-containerize**: Create optimized Dockerfiles for .NET projects
-- **distributed-event-bus**: Implement RabbitMQ event handlers following ABP patterns
-- **skill-creator**: Guide for creating new Claude skills
+### Backend Skills
+- **abp-framework-patterns**: ABP repository, unit of work, domain services
+- **crud-service**: Generate ABP CRUD services with DTOs, validators
+- **dotnet-async-patterns**: Async/await, ValueTask, cancellation tokens
+- **error-handling-patterns**: Exception handling, Result types
+- **postgresql**: PostgreSQL schema design, indexing
+- **sql-optimization-patterns**: Query optimization, N+1 prevention
+
+### Frontend Skills
+- **typescript-advanced-types**: Generics, conditional types, mapped types
+- **modern-javascript-patterns**: ES6+, async patterns
+- **javascript-testing-patterns**: Jest, React Testing Library
+
+### DevOps Skills
+- **docker-dotnet-containerize**: Multi-stage Dockerfiles for .NET
+- **git-advanced-workflows**: Rebasing, cherry-picking, bisect
+
+### Review Skills
+- **code-review-excellence**: PR review best practices
+- **e2e-testing-patterns**: Playwright automation
+
+### Meta Skills
+- **skill-creator**: Guide for creating new skills
+- **agent-creator**: Guide for creating new agents
 
 ## Prerequisites
 
@@ -105,3 +167,18 @@ The `.claude/skills/` directory contains specialized skills:
 Before first run:
 1. Run `abp install-libs` in AuthServer directory for client libraries
 2. Run DbMigrator to create database and seed initial data
+
+## Knowledge Base Files
+
+Documentation in `docs/` folder:
+
+| Document | Owner Agent | Purpose |
+|----------|-------------|---------|
+| `business-requirements.md` | product-architect | BRD |
+| `technical-specification.md` | backend-architect | TSD |
+| `backlog.md` | product-architect | User stories |
+| `decisions.md` | backend-architect | ADRs |
+| `test-cases.md` | qa-engineer | Test plans |
+| `security-audit.md` | security-engineer | Security findings |
+| `releases.md` | devops-engineer | Release history |
+| `dev-progress.md` | orchestrator | Activity log |

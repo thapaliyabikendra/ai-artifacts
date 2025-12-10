@@ -3,16 +3,19 @@
 Skill Packager - Creates a distributable .skill file of a skill folder
 
 Usage:
-    python utils/package_skill.py <path/to/skill-folder> [output-directory]
+    python package_skill.py <path/to/skill-folder> [output-directory]
 
 Example:
-    python utils/package_skill.py skills/public/my-skill
-    python utils/package_skill.py skills/public/my-skill ./dist
+    python package_skill.py skills/public/my-skill
+    python package_skill.py skills/public/my-skill ./dist
 """
 
 import sys
 import zipfile
 from pathlib import Path
+
+# Add script directory to path for sibling imports
+sys.path.insert(0, str(Path(__file__).parent))
 from quick_validate import validate_skill
 
 
@@ -46,12 +49,19 @@ def package_skill(skill_path, output_dir=None):
 
     # Run validation before packaging
     print("🔍 Validating skill...")
-    valid, message = validate_skill(skill_path)
+    valid, message, warnings = validate_skill(skill_path)
     if not valid:
         print(f"❌ Validation failed: {message}")
         print("   Please fix the validation errors before packaging.")
         return None
-    print(f"✅ {message}\n")
+    print(f"✅ {message}")
+
+    # Show warnings if any
+    if warnings:
+        print(f"\n⚠️  Quality warnings ({len(warnings)}):")
+        for i, warning in enumerate(warnings, 1):
+            print(f"   {i}. {warning}")
+        print()  # Extra newline for readability
 
     # Determine output location
     skill_name = skill_path.name

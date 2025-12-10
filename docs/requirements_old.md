@@ -2,27 +2,13 @@
 
 ## 1. Overview
 
-A small local clinic needs a lightweight system to manage **patients**,
+A small local clinic system to manage **patients**,
 **appointments**, and **doctor schedules**. The system should expose a
-**RESTful Web API** secured with **JWT authentication** using **ASP.NET
-Identity**.
+**RESTful Web API**.
 
 The system will be used by: - **Admin** (full control) - **Doctor**
 (view own appointments & patients) - **Receptionist** (create patients &
 schedule appointments)
-
-## 2. Core Functional Requirements
-
-### 2.1 User Accounts & Authentication
-
--   Register, login, receive JWT token
--   Roles:
-    -   Admin
-    -   Doctor
-    -   Receptionist
--   Admin:
-    -   Create users
-    -   Assign roles
 
 ### 3. Domain Entities
 
@@ -91,14 +77,10 @@ schedule appointments)
 -   DTOs for all requests/responses
 -   JWT + ASP.NET Identity authentication
 -   Role-based authorization
--   Validation via Data Annotations or FluentValidation
--   SQL Server with EF Core Migrations
+-   Validation via FluentValidation
 
 ## 6. Optional Extensions
 
 -   Paging & filtering
--   Audit logs
 -   Email reminders
 -   Swagger documentation
--   Global exception handling middleware
-
