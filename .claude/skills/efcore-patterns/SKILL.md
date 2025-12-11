@@ -469,6 +469,214 @@ builder.Entity<Patient>(b =>
 });
 ```
 
+## PostgreSQL-Specific Patterns
+
+### PostgreSQL Data Types
+
+```csharp
+// Entity with PostgreSQL-specific types
+public class AuditRecord : Entity<Guid>
+{
+    public string[] Tags { get; set; }           // PostgreSQL array
+    public Dictionary<string, object> Metadata { get; set; }  // jsonb
+    public NpgsqlRange<DateTime> ValidRange { get; set; }     // daterange
+}
+
+// Configuration
+builder.Entity<AuditRecord>(b =>
+{
+    // Array column
+    b.Property(x => x.Tags)
+        .HasColumnType("text[]");
+
+    // JSONB column (most common for flexible data)
+    b.Property(x => x.Metadata)
+        .HasColumnType("jsonb");
+
+    // Date range
+    b.Property(x => x.ValidRange)
+        .HasColumnType("daterange");
+});
+```
+
+### PostgreSQL UUID Primary Key
+
+```csharp
+// PostgreSQL generates UUID (no need for client-side generation)
+builder.Entity<Patient>(b =>
+{
+    b.Property(x => x.Id)
+        .HasDefaultValueSql("gen_random_uuid()");
+});
+```
+
+### Full-Text Search with tsvector
+
+```csharp
+// Entity with search vector
+public class Patient : FullAuditedAggregateRoot<Guid>
+{
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public NpgsqlTsVector SearchVector { get; private set; }
+}
+
+// Configuration
+builder.Entity<Patient>(b =>
+{
+    // Generated column for full-text search
+    b.Property(x => x.SearchVector)
+        .HasColumnType("tsvector")
+        .HasComputedColumnSql(
+            "to_tsvector('english', coalesce(\"FirstName\", '') || ' ' || coalesce(\"LastName\", ''))",
+            stored: true);
+
+    // GIN index for fast text search
+    b.HasIndex(x => x.SearchVector)
+        .HasMethod("GIN");
+});
+
+// Usage in repository
+public async Task<List<Patient>> SearchAsync(string searchTerm)
+{
+    var dbSet = await GetDbSetAsync();
+    return await dbSet
+        .Where(p => p.SearchVector.Matches(EF.Functions.ToTsQuery("english", searchTerm)))
+        .ToListAsync();
+}
+```
+
+### PostgreSQL Index Types
+
+```csharp
+builder.Entity<Patient>(b =>
+{
+    // B-tree (default) - equality and range queries
+    b.HasIndex(x => x.Email).IsUnique();
+
+    // GIN - arrays, jsonb, full-text search
+    b.HasIndex(x => x.Tags).HasMethod("GIN");
+
+    // GiST - geometric data, ranges, full-text
+    b.HasIndex(x => x.ValidRange).HasMethod("GIST");
+
+    // BRIN - large tables with natural ordering
+    b.HasIndex(x => x.CreationTime).HasMethod("BRIN");
+
+    // Partial index (filtered)
+    b.HasIndex(x => x.Email)
+        .HasFilter("\"IsDeleted\" = false")
+        .IsUnique();
+
+    // Covering index (include columns)
+    b.HasIndex(x => x.Email)
+        .IncludeProperties(x => new { x.FirstName, x.LastName });
+});
+```
+
+### JSONB Queries
+
+```csharp
+// Query JSONB data
+public async Task<List<AuditRecord>> GetByMetadataAsync(string key, string value)
+{
+    var dbSet = await GetDbSetAsync();
+
+    // Using raw SQL for complex JSONB queries
+    return await dbSet
+        .FromSqlRaw(
+            "SELECT * FROM \"AuditRecords\" WHERE \"Metadata\" @> @p0::jsonb",
+            $"{{\"{key}\": \"{value}\"}}")
+        .ToListAsync();
+
+    // Or using EF.Functions (limited support)
+    return await dbSet
+        .Where(x => EF.Functions.JsonContains(x.Metadata, new { key = value }))
+        .ToListAsync();
+}
+```
+
+### PostgreSQL Connection String
+
+```json
+{
+  "ConnectionStrings": {
+    "Default": "Host=localhost;Port=5432;Database=ClinicManagementSystem;Username=postgres;Password=secret;Include Error Detail=true;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100"
+  }
+}
+```
+
+**Key parameters:**
+- `Include Error Detail=true` - Detailed errors in dev
+- `Pooling=true` - Enable connection pooling
+- `Minimum Pool Size` / `Maximum Pool Size` - Pool limits
+- `Command Timeout` - Query timeout in seconds
+- `SSL Mode=Require` - For production
+
+### PostgreSQL-Specific Migrations
+
+```csharp
+protected override void Up(MigrationBuilder migrationBuilder)
+{
+    // Create extension (for UUID, full-text, etc.)
+    migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";");
+    migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS \"pg_trgm\";"); // Trigram for LIKE optimization
+
+    // Create enum type
+    migrationBuilder.Sql(@"
+        DO $$ BEGIN
+            CREATE TYPE appointment_status AS ENUM ('Scheduled', 'Confirmed', 'Completed', 'Cancelled');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    ");
+
+    // Create table with PostgreSQL features
+    migrationBuilder.CreateTable(
+        name: "Patients",
+        columns: table => new
+        {
+            Id = table.Column<Guid>(nullable: false, defaultValueSql: "gen_random_uuid()"),
+            Tags = table.Column<string[]>(type: "text[]", nullable: true),
+            Metadata = table.Column<string>(type: "jsonb", nullable: true),
+            SearchVector = table.Column<NpgsqlTsVector>(type: "tsvector", nullable: true)
+        });
+
+    // Create GIN index
+    migrationBuilder.Sql(@"
+        CREATE INDEX ""IX_Patients_SearchVector"" ON ""Patients"" USING GIN (""SearchVector"");
+    ");
+}
+```
+
+### ABP with PostgreSQL Configuration
+
+```csharp
+// EntityFrameworkCoreModule configuration
+public override void ConfigureServices(ServiceConfigurationContext context)
+{
+    context.Services.AddAbpDbContext<ClinicDbContext>(options =>
+    {
+        options.AddDefaultRepositories(includeAllEntities: true);
+    });
+
+    Configure<AbpDbContextOptions>(options =>
+    {
+        options.UseNpgsql(npgsqlOptions =>
+        {
+            // Enable retry on transient errors
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorCodesToAdd: null);
+
+            // Command timeout
+            npgsqlOptions.CommandTimeout(60);
+        });
+    });
+}
+```
+
 ## Quality Checklist
 
 - [ ] Entities inherit appropriate ABP base class
@@ -480,6 +688,8 @@ builder.Entity<Patient>(b =>
 - [ ] Value objects configured as owned types
 - [ ] Enums have explicit conversion
 - [ ] Concurrency handled via AggregateRoot
+- [ ] PostgreSQL-specific types used where appropriate (jsonb, arrays)
+- [ ] GIN/GiST indexes for jsonb and full-text columns
 
 ## Integration Points
 
@@ -487,3 +697,4 @@ This skill is used by:
 - **abp-developer**: Entity and DbContext implementation
 - **backend-architect**: Data layer design decisions
 - **code-reviewer**: EF Core pattern validation
+- **database-migrator**: Migration generation and review

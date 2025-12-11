@@ -83,7 +83,7 @@ Input:
 - docs/domain/entities/
 
 Context: Read docs/architecture/README.md, docs/architecture/patterns.md
-Skills: Apply api-design-principles, postgresql patterns
+Skills: Apply api-design-principles, efcore-patterns
 Output: docs/features/{feature-name}/technical-design.md
 
 Include: Entity design, DTOs, AppService interface, permissions, API endpoints, schema.

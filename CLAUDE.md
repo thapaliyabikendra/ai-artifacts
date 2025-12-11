@@ -96,12 +96,12 @@ Application.Contracts → Application → HttpApi → HttpApi.Host
 - **AppServices**: Inherit from `ApplicationService` or implement `IApplicationService`
 - **DTOs**: Use `CreateUpdateDtoBase`, `EntityDto<TKey>` patterns
 - **Validation**: FluentValidation with ABP integration
-- **AutoMapper**: Configure in `*ApplicationAutoMapperProfile.cs`
+- **Mapperly**: Configure in `*ApplicationMappers.cs` (NOT AutoMapper)
 - **Permissions**: Define in `*Permissions.cs`, grant in module configuration
 
 ## Available Sub-Agents
 
-The `.claude/agents/` directory contains 11 specialized agents organized by role:
+The `.claude/agents/` directory contains 12 specialized agents organized by role:
 
 ### Architects (4)
 | Agent | Purpose |
@@ -125,10 +125,11 @@ The `.claude/agents/` directory contains 11 specialized agents organized by role
 | `security-engineer` | Security audits, STRIDE, OWASP |
 | `qa-engineer` | Test automation (xUnit, Playwright) |
 
-### Specialists (1)
+### Specialists (2)
 | Agent | Purpose |
 |-------|---------|
 | `debugger` | Root cause analysis, error diagnosis |
+| `database-migrator` | EF Core migrations, schema management |
 
 **Usage**: `Use the engineers/abp-developer agent to implement the Patient service`
 
@@ -137,13 +138,15 @@ The `.claude/agents/` directory contains 11 specialized agents organized by role
 The `.claude/skills/` directory contains domain knowledge skills:
 
 ### Backend Skills
-- **abp-framework-patterns**: ABP repository, unit of work, domain services, CRUD templates
-- **efcore-patterns**: EF Core entity configuration, DbContext, migrations, relationships
+- **abp-framework-patterns**: ABP repository, UoW, Mapperly, data seeding, multi-tenancy, distributed events
+- **efcore-patterns**: EF Core configuration, PostgreSQL types, migrations, jsonb, full-text search
+- **fluentvalidation-patterns**: DTO validators, async validation, repository checks, localization
+- **openiddict-authorization**: Permissions, RBAC, custom claims, multi-tenant authorization
 - **linq-optimization-patterns**: N+1 prevention, Include patterns, projections, AsNoTracking
 - **debugging-patterns**: Root cause analysis, common ABP/EF/React issues and fixes
 - **csharp-advanced-patterns**: Records, pattern matching, async, LINQ, performance
 - **dotnet-async-patterns**: Async/await, ValueTask, cancellation tokens
-- **error-handling-patterns**: Exception handling, Result types
+- **error-handling-patterns**: Exception handling, Result types, Polly retry/circuit breaker
 
 ### Requirements & Design Skills
 - **requirements-engineering**: User stories, acceptance criteria, BRD patterns
@@ -174,8 +177,41 @@ The `.claude/skills/` directory contains domain knowledge skills:
 ### Workflow Skills
 - **feature-development-workflow**: End-to-end feature development orchestration
 
-### Meta Skills
+### Meta Skills (in `.claude/skills/meta/`)
 - **claude-artifact-creator**: Create and improve Claude artifacts (skills, agents, commands)
+- **prompt-engineering-patterns**: Advanced prompt techniques for LLM interactions
+
+## Available Commands
+
+The `.claude/commands/` directory contains slash commands:
+
+### Feature Commands
+| Command | Purpose |
+|---------|---------|
+| `/add-feature` | End-to-end feature development (6 stages) |
+
+### Generate Commands
+| Command | Purpose |
+|---------|---------|
+| `/generate:entity` | Scaffold complete ABP entity with all layers |
+| `/generate:migration` | Generate and review EF Core migrations |
+
+### TDD Commands
+| Command | Purpose |
+|---------|---------|
+| `/tdd-cycle` | Execute full TDD workflow (red-green-refactor) |
+| `/tdd-red` | Write failing xUnit tests |
+| `/tdd-refactor` | Refactor while keeping tests green |
+
+### Review Commands
+| Command | Purpose |
+|---------|---------|
+| `/review:permissions` | Audit permission definitions and usage |
+
+### Debug Commands
+| Command | Purpose |
+|---------|---------|
+| `/smart-debug` | Intelligent debugging workflow |
 
 ## Feature Development Workflow
 

@@ -8,11 +8,12 @@ This document defines the structure, conventions, and decision framework for org
 2. [Choosing the Right Tool](#choosing-the-right-tool)
 3. [Agents](#agents-agents)
 4. [Agent Separation of Concerns](#agent-separation-of-concerns)
-5. [Skills](#skills-skills)
-6. [Commands](#commands-commands)
-7. [Hooks](#hooks)
-8. [Output Styles](#output-styles)
-9. [Quick Reference](#quick-reference)
+5. [Artifact Portability Rules](#artifact-portability-rules)
+6. [Skills](#skills-skills)
+7. [Commands](#commands-commands)
+8. [Hooks](#hooks)
+9. [Output Styles](#output-styles)
+10. [Quick Reference](#quick-reference)
 
 ---
 
@@ -364,6 +365,58 @@ Before implementation, read:
 | CLI commands in agent | Not reusable, hard to maintain | Extract to command |
 | Repeated content across agents | Duplication, inconsistency | Create shared skill |
 | Project-specific paths in agent | Not portable | Move to `docs/project-context.md` |
+
+---
+
+## Artifact Portability Rules
+
+**CRITICAL**: All Claude artifacts (agents, skills, commands) must be **generic and reusable**. They should work across any project without modification.
+
+### Prohibited Content in Artifacts
+
+| Content Type | Example | Alternative |
+|--------------|---------|-------------|
+| **Project names** | `ClinicManagementSystem`, `MyApp` | Use `{ProjectName}` placeholder |
+| **Entity names** | `Patient`, `Doctor`, `Order` | Use `{Entity}`, `{EntityName}` placeholders |
+| **Hardcoded paths** | `api/src/ClinicManagementSystem.Domain/` | Use dynamic detection or `{ProjectName}` |
+| **Solution files** | `ClinicManagementSystem.slnx` | Use `{SolutionName}.slnx` or `find` command |
+| **Permission names** | `ClinicPermissions.Patients.Create` | Use `{Project}Permissions.{Feature}.{Action}` |
+| **Namespace prefixes** | `ClinicManagementSystem.` | Use `{ProjectName}.` |
+
+### Dynamic Project Detection
+
+For commands and agents that need to locate project files, use dynamic detection:
+
+```bash
+# Find EntityFrameworkCore project
+EF_PROJECT=$(find api/src -maxdepth 1 -type d -name "*EntityFrameworkCore" | head -1)
+
+# Find DbMigrator project
+MIGRATOR=$(find api/src -maxdepth 1 -type d -name "*DbMigrator" | head -1)
+
+# Find solution file
+SOLUTION=$(find api -maxdepth 1 -name "*.slnx" -o -name "*.sln" | head -1)
+```
+
+### Where Project-Specific Content Belongs
+
+| Location | Purpose |
+|----------|---------|
+| `CLAUDE.md` | Project overview, build commands, entity list |
+| `docs/architecture/README.md` | Project structure, paths, conventions |
+| `docs/domain/entities/` | Entity definitions, business rules |
+| `docs/project-context.md` | All project-specific values in one place |
+
+### Validation Checklist
+
+Before committing any artifact, verify:
+
+- [ ] No hardcoded project names (search for your project name)
+- [ ] No specific entity names in examples (use `{Entity}`, `Product`, `Order` as generic examples)
+- [ ] Paths use placeholders or dynamic detection
+- [ ] Code samples use generic class names
+- [ ] Permissions use `{Project}Permissions.{Feature}.{Action}` pattern
+- [ ] Skills reference `CLAUDE.md` or `docs/` for project context
 
 ### Resources
 

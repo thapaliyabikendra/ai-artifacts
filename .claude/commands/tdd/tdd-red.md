@@ -1,135 +1,108 @@
-Write comprehensive failing tests following TDD red phase principles.
+---
+description: Write failing xUnit tests following TDD red phase for ABP/.NET
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+argument-hint: "<feature-or-component>"
+---
 
-[Extended thinking: Generates failing tests that properly define expected behavior using test-automator agent.]
+# TDD Red Phase - Write Failing Tests
 
-## Role
+Generate failing xUnit tests for ABP Framework applications.
 
-Generate failing tests using Task tool with subagent_type="unit-testing::test-automator".
+**Arguments**: $ARGUMENTS
 
-## Prompt Template
+## Execution
 
-"Generate comprehensive FAILING tests for: $ARGUMENTS
+Use Task tool with `subagent_type="qa-engineer"`:
 
-## Core Requirements
-
-1. **Test Structure**
-   - Framework-appropriate setup (Jest/pytest/JUnit/Go/RSpec)
-   - Arrange-Act-Assert pattern
-   - should_X_when_Y naming convention
-   - Isolated fixtures with no interdependencies
-
-2. **Behavior Coverage**
-   - Happy path scenarios
-   - Edge cases (empty, null, boundary values)
-   - Error handling and exceptions
-   - Concurrent access (if applicable)
-
-3. **Failure Verification**
-   - Tests MUST fail when run
-   - Failures for RIGHT reasons (not syntax/import errors)
-   - Meaningful diagnostic error messages
-   - No cascading failures
-
-4. **Test Categories**
-   - Unit: Isolated component behavior
-   - Integration: Component interaction
-   - Contract: API/interface contracts
-   - Property: Mathematical invariants
-
-## Framework Patterns
-
-**JavaScript/TypeScript (Jest/Vitest)**
-- Mock dependencies with `vi.fn()` or `jest.fn()`
-- Use `@testing-library` for React components
-- Property tests with `fast-check`
-
-**Python (pytest)**
-- Fixtures with appropriate scopes
-- Parametrize for multiple test cases
-- Hypothesis for property-based tests
-
-**Go**
-- Table-driven tests with subtests
-- `t.Parallel()` for parallel execution
-- Use `testify/assert` for cleaner assertions
-
-**Ruby (RSpec)**
-- `let` for lazy loading, `let!` for eager
-- Contexts for different scenarios
-- Shared examples for common behavior
-
-## Quality Checklist
-
-- Readable test names documenting intent
-- One behavior per test
-- No implementation leakage
-- Meaningful test data (not 'foo'/'bar')
-- Tests serve as living documentation
-
-## Anti-Patterns to Avoid
-
-- Tests passing immediately
-- Testing implementation vs behavior
-- Complex setup code
-- Multiple responsibilities per test
-- Brittle tests tied to specifics
-
-## Edge Case Categories
-
-- **Null/Empty**: undefined, null, empty string/array/object
-- **Boundaries**: min/max values, single element, capacity limits
-- **Special Cases**: Unicode, whitespace, special characters
-- **State**: Invalid transitions, concurrent modifications
-- **Errors**: Network failures, timeouts, permissions
-
-## Output Requirements
-
-- Complete test files with imports
-- Documentation of test purpose
-- Commands to run and verify failures
-- Metrics: test count, coverage areas
-- Next steps for green phase"
-
-## Validation
-
-After generation:
-1. Run tests - confirm they fail
-2. Verify helpful failure messages
-3. Check test independence
-4. Ensure comprehensive coverage
-
-## Example (Minimal)
-
-```typescript
-// auth.service.test.ts
-describe('AuthService', () => {
-  let authService: AuthService;
-  let mockUserRepo: jest.Mocked<UserRepository>;
-
-  beforeEach(() => {
-    mockUserRepo = { findByEmail: jest.fn() } as any;
-    authService = new AuthService(mockUserRepo);
-  });
-
-  it('should_return_token_when_valid_credentials', async () => {
-    const user = { id: '1', email: 'test@example.com', passwordHash: 'hashed' };
-    mockUserRepo.findByEmail.mockResolvedValue(user);
-
-    const result = await authService.authenticate('test@example.com', 'pass');
-
-    expect(result.success).toBe(true);
-    expect(result.token).toBeDefined();
-  });
-
-  it('should_fail_when_user_not_found', async () => {
-    mockUserRepo.findByEmail.mockResolvedValue(null);
-
-    const result = await authService.authenticate('none@example.com', 'pass');
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('INVALID_CREDENTIALS');
-  });
-});
 ```
+Generate comprehensive FAILING xUnit tests for: {feature-or-component}
+
+Context: Read existing tests in test/ folder
+Skills: Apply xunit-testing-patterns
+
+## Test Structure
+
+- Use xUnit with Shouldly assertions
+- Arrange-Act-Assert pattern
+- Should_ExpectedBehavior_When_Condition naming
+- Inherit from appropriate ABP test base class
+
+## Coverage Categories
+
+1. **Happy Path**: Normal successful operations
+2. **Validation**: Invalid inputs, missing required fields
+3. **Authorization**: Permission checks, role-based access
+4. **Edge Cases**: Empty collections, boundary values, nulls
+5. **Error Handling**: Expected exceptions, error responses
+
+## ABP Test Patterns
+
+**Application Service Test:**
+```csharp
+public class PatientAppService_Tests : ClinicManagementSystemApplicationTestBase
+{
+    private readonly IPatientAppService _patientAppService;
+
+    public PatientAppService_Tests()
+    {
+        _patientAppService = GetRequiredService<IPatientAppService>();
+    }
+
+    [Fact]
+    public async Task Should_Create_Patient_With_Valid_Input()
+    {
+        // Arrange
+        var input = new CreateUpdatePatientDto
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john@example.com"
+        };
+
+        // Act
+        var result = await _patientAppService.CreateAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Id.ShouldNotBe(Guid.Empty);
+        result.FirstName.ShouldBe("John");
+    }
+
+    [Fact]
+    public async Task Should_Throw_When_Email_Invalid()
+    {
+        // Arrange
+        var input = new CreateUpdatePatientDto
+        {
+            FirstName = "John",
+            Email = "invalid-email"
+        };
+
+        // Act & Assert
+        await Should.ThrowAsync<AbpValidationException>(
+            () => _patientAppService.CreateAsync(input)
+        );
+    }
+}
+```
+
+## Requirements
+
+- Tests MUST fail when run (missing implementation)
+- Failures for RIGHT reasons (not syntax errors)
+- Each test verifies ONE behavior
+- Use meaningful test data
+- Mock external dependencies with NSubstitute
+
+## Output
+
+- Test files in test/ClinicManagementSystem.Application.Tests/
+- Run command: `dotnet test`
+- Next step: Proceed to GREEN phase
+```
+
+**Checkpoint**: All tests fail with meaningful error messages.
+
+---
 
 Test requirements: $ARGUMENTS

@@ -551,33 +551,346 @@ public class PatientActivatedEventHandler :
 }
 ```
 
-### 8. AutoMapper Configuration
-
+**Robust Event Handler Pattern (with Multi-Tenancy & Idempotency):**
 ```csharp
-// Application/ClinicApplicationAutoMapperProfile.cs
-public class ClinicApplicationAutoMapperProfile : Profile
+// For cross-tenant event processing with error handling
+public class EntitySyncEventHandler :
+    IDistributedEventHandler<EntityUpdatedEto>,
+    ITransientDependency
 {
-    public ClinicApplicationAutoMapperProfile()
+    private readonly IRepository<Entity, Guid> _repository;
+    private readonly IDataFilter _dataFilter;
+    private readonly ILogger<EntitySyncEventHandler> _logger;
+
+    public EntitySyncEventHandler(
+        IRepository<Entity, Guid> repository,
+        IDataFilter dataFilter,
+        ILogger<EntitySyncEventHandler> logger)
     {
-        // Entity to DTO
-        CreateMap<Patient, PatientDto>();
-        CreateMap<Appointment, AppointmentDto>()
-            .ForMember(dest => dest.PatientName,
-                opt => opt.MapFrom(src => src.Patient.Name))
-            .ForMember(dest => dest.DoctorName,
-                opt => opt.MapFrom(src => src.Doctor.FullName));
+        _repository = repository;
+        _dataFilter = dataFilter;
+        _logger = logger;
+    }
 
-        // Create DTO to Entity
-        CreateMap<CreatePatientDto, Patient>()
-            .Ignore(x => x.Id)
-            .Ignore(x => x.ExtraProperties)
-            .Ignore(x => x.ConcurrencyStamp);
+    public async Task HandleEventAsync(EntityUpdatedEto eto)
+    {
+        // Disable tenant filter for cross-tenant sync
+        using (_dataFilter.Disable<IMultiTenant>())
+        {
+            try
+            {
+                _logger.LogInformation("Processing entity sync: {Id}", eto.Id);
 
-        // Update DTO to Entity
-        CreateMap<UpdatePatientDto, Patient>()
-            .Ignore(x => x.Id)
-            .Ignore(x => x.ExtraProperties)
-            .Ignore(x => x.ConcurrencyStamp);
+                // Idempotency check - find existing by unique identifier
+                var existing = await _repository.FirstOrDefaultAsync(
+                    x => x.ExternalId == eto.ExternalId);
+
+                if (existing != null)
+                {
+                    // Update existing
+                    ObjectMapper.Map(eto, existing);
+                    await _repository.UpdateAsync(existing);
+                }
+                else
+                {
+                    // Create new
+                    var entity = ObjectMapper.Map<EntityUpdatedEto, Entity>(eto);
+                    await _repository.InsertAsync(entity);
+                }
+
+                _logger.LogInformation("Entity sync completed: {Id}", eto.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Entity sync failed: {Id}", eto.Id);
+                throw new UserFriendlyException($"Failed to sync entity: {ex.Message}");
+            }
+        }
+    }
+}
+```
+
+**Key Patterns:**
+- **Idempotency**: Check for existing entity before insert to handle duplicate events
+- **Multi-Tenancy**: Use `_dataFilter.Disable<IMultiTenant>()` for cross-tenant events
+- **Error Handling**: Catch, log, and throw `UserFriendlyException`
+- **Logging**: Log at start, end, and exception points
+
+### 8. Object Mapping with Mapperly
+
+ABP 10.x uses **Mapperly** (source generator) instead of AutoMapper for better performance.
+
+**Configure Mapper:**
+```csharp
+// Application/ClinicManagementSystemApplicationMappers.cs
+[Mapper]
+public partial class ClinicManagementSystemApplicationMappers
+{
+    // Entity to DTO
+    public partial PatientDto PatientToDto(Patient patient);
+    public partial List<PatientDto> PatientsToDtos(List<Patient> patients);
+
+    // DTO to Entity (for creation)
+    public partial Patient CreateDtoToPatient(CreateUpdatePatientDto dto);
+
+    // DTO to Entity (for update) - ignores Id
+    [MapperIgnoreTarget(nameof(Patient.Id))]
+    public partial void UpdatePatientFromDto(CreateUpdatePatientDto dto, Patient patient);
+
+    // Complex mapping with navigation properties
+    [MapProperty(nameof(Appointment.Patient.FirstName), nameof(AppointmentDto.PatientName))]
+    [MapProperty(nameof(Appointment.Doctor.FullName), nameof(AppointmentDto.DoctorName))]
+    public partial AppointmentDto AppointmentToDto(Appointment appointment);
+}
+```
+
+**Usage in AppService:**
+```csharp
+public class PatientAppService : ApplicationService, IPatientAppService
+{
+    private readonly IRepository<Patient, Guid> _patientRepository;
+    private readonly ClinicManagementSystemApplicationMappers _mapper;
+
+    public PatientAppService(
+        IRepository<Patient, Guid> patientRepository,
+        ClinicManagementSystemApplicationMappers mapper)
+    {
+        _patientRepository = patientRepository;
+        _mapper = mapper;
+    }
+
+    public async Task<PatientDto> GetAsync(Guid id)
+    {
+        var patient = await _patientRepository.GetAsync(id);
+        return _mapper.PatientToDto(patient);
+    }
+
+    public async Task<PatientDto> CreateAsync(CreateUpdatePatientDto input)
+    {
+        var patient = _mapper.CreateDtoToPatient(input);
+        patient = await _patientRepository.InsertAsync(patient);
+        return _mapper.PatientToDto(patient);
+    }
+
+    public async Task<PatientDto> UpdateAsync(Guid id, CreateUpdatePatientDto input)
+    {
+        var patient = await _patientRepository.GetAsync(id);
+        _mapper.UpdatePatientFromDto(input, patient);
+        await _patientRepository.UpdateAsync(patient);
+        return _mapper.PatientToDto(patient);
+    }
+}
+```
+
+**Register in Module:**
+```csharp
+public override void ConfigureServices(ServiceConfigurationContext context)
+{
+    // Mapperly mappers are auto-registered as singletons
+    context.Services.AddSingleton<ClinicManagementSystemApplicationMappers>();
+}
+```
+
+### 9. Data Seeding
+
+**IDataSeedContributor Pattern:**
+```csharp
+// Domain/Data/ClinicDataSeedContributor.cs
+public class ClinicDataSeedContributor : IDataSeedContributor, ITransientDependency
+{
+    private readonly IRepository<Doctor, Guid> _doctorRepository;
+    private readonly IGuidGenerator _guidGenerator;
+
+    public ClinicDataSeedContributor(
+        IRepository<Doctor, Guid> doctorRepository,
+        IGuidGenerator guidGenerator)
+    {
+        _doctorRepository = doctorRepository;
+        _guidGenerator = guidGenerator;
+    }
+
+    public async Task SeedAsync(DataSeedContext context)
+    {
+        // Check if data already exists (idempotent)
+        if (await _doctorRepository.GetCountAsync() > 0)
+        {
+            return;
+        }
+
+        // Seed initial data
+        var doctors = new List<Doctor>
+        {
+            new Doctor(_guidGenerator.Create(), "Dr. Smith", "Cardiology", "smith@clinic.com"),
+            new Doctor(_guidGenerator.Create(), "Dr. Jones", "Pediatrics", "jones@clinic.com"),
+        };
+
+        foreach (var doctor in doctors)
+        {
+            await _doctorRepository.InsertAsync(doctor);
+        }
+    }
+}
+```
+
+**Tenant-Specific Seeding:**
+```csharp
+public async Task SeedAsync(DataSeedContext context)
+{
+    // context.TenantId is available for tenant-specific seeding
+    if (context.TenantId.HasValue)
+    {
+        await SeedTenantDataAsync(context.TenantId.Value);
+    }
+    else
+    {
+        await SeedHostDataAsync();
+    }
+}
+```
+
+**Test Data Seeding:**
+```csharp
+// Test/TestBase/ClinicManagementSystemTestDataSeedContributor.cs
+public class ClinicManagementSystemTestDataSeedContributor : IDataSeedContributor, ITransientDependency
+{
+    public static readonly Guid TestPatientId = Guid.Parse("2e701e62-0953-4dd3-910b-dc6cc93ccb0d");
+    public static readonly Guid TestDoctorId = Guid.Parse("3a801f73-1064-5ee4-a21c-ed7dd4ddc1e");
+
+    private readonly IRepository<Patient, Guid> _patientRepository;
+    private readonly IRepository<Doctor, Guid> _doctorRepository;
+
+    public async Task SeedAsync(DataSeedContext context)
+    {
+        await _patientRepository.InsertAsync(new Patient(
+            TestPatientId,
+            "Test",
+            "Patient",
+            "test@example.com"
+        ));
+
+        await _doctorRepository.InsertAsync(new Doctor(
+            TestDoctorId,
+            "Test Doctor",
+            "General",
+            "doctor@example.com"
+        ));
+    }
+}
+```
+
+### 10. Module Configuration
+
+**Module Class Pattern:**
+```csharp
+[DependsOn(
+    typeof(ClinicManagementSystemDomainModule),
+    typeof(AbpIdentityDomainModule),
+    typeof(AbpPermissionManagementDomainModule)
+)]
+public class ClinicManagementSystemApplicationModule : AbpModule
+{
+    public override void PreConfigureServices(ServiceConfigurationContext context)
+    {
+        // Configure options before other services
+        PreConfigure<AbpIdentityOptions>(options =>
+        {
+            options.ExternalLoginProviders.Add<GoogleExternalLoginProvider>();
+        });
+    }
+
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        // Configure ABP features
+        Configure<AbpAutoMapperOptions>(options =>
+        {
+            options.AddMaps<ClinicManagementSystemApplicationModule>();
+        });
+
+        // Register application services
+        context.Services.AddTransient<IPatientAppService, PatientAppService>();
+
+        // Configure distributed cache
+        Configure<AbpDistributedCacheOptions>(options =>
+        {
+            options.KeyPrefix = "Clinic:";
+        });
+    }
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var app = context.GetApplicationBuilder();
+        var env = context.GetEnvironment();
+
+        // Application initialization logic
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+    }
+}
+```
+
+**Object Extension Configuration:**
+```csharp
+// Domain.Shared/ClinicManagementSystemModuleExtensionConfigurator.cs
+public static class ClinicManagementSystemModuleExtensionConfigurator
+{
+    public static void Configure()
+    {
+        // Add custom properties to ABP entities
+        ObjectExtensionManager.Instance.Modules()
+            .ConfigureIdentity(identity =>
+            {
+                identity.ConfigureUser(user =>
+                {
+                    user.AddOrUpdateProperty<string>(
+                        "Title",
+                        property =>
+                        {
+                            property.Attributes.Add(new StringLengthAttribute(64));
+                        }
+                    );
+                });
+            });
+    }
+}
+```
+
+### 11. Multi-Tenancy Patterns
+
+**Tenant-Aware Entities:**
+```csharp
+public class Patient : FullAuditedAggregateRoot<Guid>, IMultiTenant
+{
+    public Guid? TenantId { get; set; }
+    public string FirstName { get; private set; }
+    // ABP automatically filters by TenantId
+}
+```
+
+**Cross-Tenant Operations:**
+```csharp
+public class CrossTenantService : ApplicationService
+{
+    private readonly IDataFilter _dataFilter;
+    private readonly ICurrentTenant _currentTenant;
+
+    public async Task<List<PatientDto>> GetAllTenantsPatients()
+    {
+        // Disable tenant filter
+        using (_dataFilter.Disable<IMultiTenant>())
+        {
+            return await _patientRepository.GetListAsync();
+        }
+    }
+
+    public async Task OperateOnTenant(Guid tenantId)
+    {
+        // Switch to specific tenant
+        using (_currentTenant.Change(tenantId))
+        {
+            await DoTenantSpecificOperation();
+        }
     }
 }
 ```

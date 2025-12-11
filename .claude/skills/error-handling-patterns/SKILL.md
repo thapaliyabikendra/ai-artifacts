@@ -560,6 +560,135 @@ def try_function(func: Callable[[], Optional[T]]) -> Optional[T]:
         return None
 ```
 
+## .NET Resilience with Polly
+
+For .NET applications, use Polly for production-grade retry and circuit breaker patterns.
+
+### Polly Retry with Exponential Backoff
+
+```csharp
+// Install: Polly, Polly.Extensions.Http, Polly.Contrib.WaitAndRetry
+
+// HTTP retry policy with jitter
+public IAsyncPolicy<HttpResponseMessage> BuildHttpRetryPolicy(int retryCount = 3)
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .Or<TaskCanceledException>()
+        .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
+        .WaitAndRetryAsync(
+            retryCount: retryCount,
+            sleepDurationProvider: retryAttempt =>
+            {
+                // Exponential backoff with jitter
+                var exponentialDelay = TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+                var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000));
+                return exponentialDelay + jitter;
+            },
+            onRetryAsync: async (outcome, timespan, retryAttempt, context) =>
+            {
+                _logger.LogWarning(
+                    "[Retry {Attempt}/{Total}] Status: {Status}, Waiting: {Delay:F2}s",
+                    retryAttempt, retryCount,
+                    outcome.Result?.StatusCode ?? HttpStatusCode.RequestTimeout,
+                    timespan.TotalSeconds);
+            });
+}
+```
+
+### Database Retry for Transient Errors
+
+```csharp
+// Handle PostgreSQL transient exceptions
+public IAsyncPolicy BuildDatabaseRetryPolicy(int retryCount = 3)
+{
+    return Policy
+        .Handle<DbUpdateConcurrencyException>()
+        .Or<DbUpdateException>(ex =>
+            ex.InnerException is NpgsqlException npgsqlEx &&
+            IsTransientPostgresException(npgsqlEx))
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: retryCount,
+            sleepDurationProvider: retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) +
+                TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000)),
+            onRetry: (exception, timespan, retryAttempt, context) =>
+            {
+                _logger.LogWarning(exception,
+                    "[DB Retry {Attempt}] Waiting {Delay:F2}s",
+                    retryAttempt, timespan.TotalSeconds);
+            });
+}
+
+private static bool IsTransientPostgresException(NpgsqlException ex)
+{
+    var transientCodes = new[] { "40001", "40P01", "55P03", "57014", "53300", "08000" };
+    return transientCodes.Contains(ex.SqlState);
+}
+```
+
+### Combined Policy (Retry + Circuit Breaker + Timeout)
+
+```csharp
+public IAsyncPolicy<HttpResponseMessage> BuildResilientPolicy()
+{
+    var timeout = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(30));
+
+    var retry = HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+    var circuitBreaker = HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .CircuitBreakerAsync(
+            handledEventsAllowedBeforeBreaking: 5,
+            durationOfBreak: TimeSpan.FromSeconds(30));
+
+    // Order: timeout -> retry -> circuit breaker
+    return Policy.WrapAsync(timeout, retry, circuitBreaker);
+}
+```
+
+### Usage in ABP/DI
+
+```csharp
+// Register typed HttpClient with Polly
+services.AddHttpClient<IMyApiClient, MyApiClient>()
+    .AddPolicyHandler((provider, _) =>
+    {
+        var retryService = provider.GetRequiredService<IRetryPolicyService>();
+        return retryService.BuildHttpRetryPolicy();
+    });
+
+// Manual usage in service
+public async Task<Data> GetDataAsync()
+{
+    var retryPolicy = BuildHttpRetryPolicy();
+    return await retryPolicy.ExecuteAsync(async () =>
+    {
+        var response = await _httpClient.GetAsync("/api/data");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Data>();
+    });
+}
+```
+
+### When to Use Retry
+
+✅ **Use retry for:**
+- HTTP API calls (transient network errors)
+- Database operations (deadlocks, connection timeouts)
+- External service integrations
+- File I/O operations
+
+❌ **Don't retry:**
+- Authentication failures (not transient)
+- Validation errors (not transient)
+- Business logic errors
+- Non-idempotent operations without safeguards
+
 ## Best Practices
 
 1. **Fail Fast**: Validate input early, fail quickly

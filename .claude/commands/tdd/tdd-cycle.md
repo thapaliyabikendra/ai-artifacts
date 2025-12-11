@@ -1,199 +1,145 @@
-Execute a comprehensive Test-Driven Development (TDD) workflow with strict red-green-refactor discipline:
+---
+description: Execute TDD workflow with red-green-refactor discipline for ABP/.NET
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+argument-hint: "<feature-or-component>" [--incremental] [--suite]
+---
 
-[Extended thinking: This workflow enforces test-first development through coordinated agent orchestration. Each phase of the TDD cycle is strictly enforced with fail-first verification, incremental implementation, and continuous refactoring. The workflow supports both single test and test suite approaches with configurable coverage thresholds.]
+# TDD Cycle Command
 
-## Configuration
+Execute Test-Driven Development workflow using project agents.
 
-### Coverage Thresholds
-- Minimum line coverage: 80%
-- Minimum branch coverage: 75%
-- Critical path coverage: 100%
+**Arguments**: $ARGUMENTS
 
-### Refactoring Triggers
-- Cyclomatic complexity > 10
-- Method length > 20 lines
-- Class length > 200 lines
-- Duplicate code blocks > 3 lines
+## Workflow
 
-## Phase 1: Test Specification and Design
+```
+┌─────────┐   ┌─────────┐   ┌─────────┐
+│ 1. RED  │ → │ 2.GREEN │ → │3.REFACTOR│
+│ (qa-    │   │ (abp-   │   │ (code-  │
+│ engineer│   │developer│   │ reviewer│
+└─────────┘   └─────────┘   └─────────┘
+     ↑                            │
+     └────────────────────────────┘
+```
 
-### 1. Requirements Analysis
-- Use Task tool with subagent_type="comprehensive-review::architect-review"
-- Prompt: "Analyze requirements for: $ARGUMENTS. Define acceptance criteria, identify edge cases, and create test scenarios. Output a comprehensive test specification."
-- Output: Test specification, acceptance criteria, edge case matrix
-- Validation: Ensure all requirements have corresponding test scenarios
+## Phase 1: RED - Write Failing Tests
 
-### 2. Test Architecture Design
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Design test architecture for: $ARGUMENTS based on test specification. Define test structure, fixtures, mocks, and test data strategy. Ensure testability and maintainability."
-- Output: Test architecture, fixture design, mock strategy
-- Validation: Architecture supports isolated, fast, reliable tests
+Use Task tool with `subagent_type="qa-engineer"`:
 
-## Phase 2: RED - Write Failing Tests
+```
+Write FAILING xUnit tests for: {feature-or-component}
 
-### 3. Write Unit Tests (Failing)
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Write FAILING unit tests for: $ARGUMENTS. Tests must fail initially. Include edge cases, error scenarios, and happy paths. DO NOT implement production code."
-- Output: Failing unit tests, test documentation
-- **CRITICAL**: Verify all tests fail with expected error messages
+Context: Read existing tests in test/ folder
+Skills: Apply xunit-testing-patterns
 
-### 4. Verify Test Failure
-- Use Task tool with subagent_type="tdd-workflows::code-reviewer"
-- Prompt: "Verify that all tests for: $ARGUMENTS are failing correctly. Ensure failures are for the right reasons (missing implementation, not test errors). Confirm no false positives."
-- Output: Test failure verification report
-- **GATE**: Do not proceed until all tests fail appropriately
+Requirements:
+- Tests MUST fail initially (missing implementation)
+- Use Arrange-Act-Assert pattern
+- Include: happy path, validation, authorization, edge cases
+- Use Shouldly for assertions
+- Mock dependencies with NSubstitute
 
-## Phase 3: GREEN - Make Tests Pass
+Output: Test files in appropriate test project
+```
 
-### 5. Minimal Implementation
-- Use Task tool with subagent_type="backend-development::backend-architect"
-- Prompt: "Implement MINIMAL code to make tests pass for: $ARGUMENTS. Focus only on making tests green. Do not add extra features or optimizations. Keep it simple."
-- Output: Minimal working implementation
-- Constraint: No code beyond what's needed to pass tests
+**Checkpoint**: All tests fail with meaningful error messages.
 
-### 6. Verify Test Success
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Run all tests for: $ARGUMENTS and verify they pass. Check test coverage metrics. Ensure no tests were accidentally broken."
-- Output: Test execution report, coverage metrics
-- **GATE**: All tests must pass before proceeding
+---
 
-## Phase 4: REFACTOR - Improve Code Quality
+## Phase 2: GREEN - Minimal Implementation
 
-### 7. Code Refactoring
-- Use Task tool with subagent_type="tdd-workflows::code-reviewer"
-- Prompt: "Refactor implementation for: $ARGUMENTS while keeping tests green. Apply SOLID principles, remove duplication, improve naming, and optimize performance. Run tests after each refactoring."
-- Output: Refactored code, refactoring report
-- Constraint: Tests must remain green throughout
+Use Task tool with `subagent_type="abp-developer"`:
 
-### 8. Test Refactoring
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Refactor tests for: $ARGUMENTS. Remove test duplication, improve test names, extract common fixtures, and enhance test readability. Ensure tests still provide same coverage."
-- Output: Refactored tests, improved test structure
-- Validation: Coverage metrics unchanged or improved
+```
+Implement MINIMAL code to make tests pass for: {feature-or-component}
 
-## Phase 5: Integration and System Tests
+Context: Read docs/architecture/README.md, failing tests
+Skills: Apply abp-framework-patterns
 
-### 9. Write Integration Tests (Failing First)
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Write FAILING integration tests for: $ARGUMENTS. Test component interactions, API contracts, and data flow. Tests must fail initially."
-- Output: Failing integration tests
-- Validation: Tests fail due to missing integration logic
+Requirements:
+- Focus ONLY on making tests green
+- No extra features or optimizations
+- Follow ABP naming conventions
+- Keep methods small and focused
 
-### 10. Implement Integration
-- Use Task tool with subagent_type="backend-development::backend-architect"
-- Prompt: "Implement integration code for: $ARGUMENTS to make integration tests pass. Focus on component interaction and data flow."
-- Output: Integration implementation
-- Validation: All integration tests pass
+Output: Source code files per test requirements
+```
 
-## Phase 6: Continuous Improvement Cycle
+**Checkpoint**: All tests pass. Build succeeds.
 
-### 11. Performance and Edge Case Tests
-- Use Task tool with subagent_type="unit-testing::test-automator"
-- Prompt: "Add performance tests and additional edge case tests for: $ARGUMENTS. Include stress tests, boundary tests, and error recovery tests."
-- Output: Extended test suite
-- Metric: Increased test coverage and scenario coverage
+---
 
-### 12. Final Code Review
-- Use Task tool with subagent_type="comprehensive-review::architect-review"
-- Prompt: "Perform comprehensive review of: $ARGUMENTS. Verify TDD process was followed, check code quality, test quality, and coverage. Suggest improvements."
-- Output: Review report, improvement suggestions
-- Action: Implement critical suggestions while maintaining green tests
+## Phase 3: REFACTOR - Improve Code Quality
 
-## Incremental Development Mode
+Use Task tool with `subagent_type="code-reviewer"`:
 
-For test-by-test development:
+```
+Refactor implementation for: {feature-or-component}
+
+Context: Read implementation and tests
+Skills: Apply code-review-excellence patterns
+
+Requirements:
+- Keep all tests green
+- Apply SOLID principles
+- Remove duplication
+- Improve naming
+- Run tests after each change
+
+Checklist:
+- [ ] Single responsibility per class/method
+- [ ] Proper async/await usage
+- [ ] No magic numbers/strings
+- [ ] Consistent error handling
+```
+
+**Checkpoint**: Tests still pass. Code quality improved.
+
+---
+
+## Modes
+
+### Incremental Mode (`--incremental`)
 1. Write ONE failing test
 2. Make ONLY that test pass
 3. Refactor if needed
-4. Repeat for next test
+4. Repeat
 
-Use this approach by adding `--incremental` flag to focus on one test at a time.
-
-## Test Suite Mode
-
-For comprehensive test suite development:
-1. Write ALL tests for a feature/module (failing)
-2. Implement code to pass ALL tests
+### Suite Mode (`--suite`)
+1. Write ALL tests for feature (failing)
+2. Implement to pass ALL tests
 3. Refactor entire module
-4. Add integration tests
 
-Use this approach by adding `--suite` flag for batch test development.
+## Validation Checklist
 
-## Validation Checkpoints
+### RED Phase
+- [ ] Tests written before implementation
+- [ ] All tests fail with meaningful errors
+- [ ] Failures due to missing implementation
 
-### RED Phase Validation
-- [ ] All tests written before implementation
-- [ ] All tests fail with meaningful error messages
-- [ ] Test failures are due to missing implementation
-- [ ] No test passes accidentally
-
-### GREEN Phase Validation
+### GREEN Phase
 - [ ] All tests pass
-- [ ] No extra code beyond test requirements
-- [ ] Coverage meets minimum thresholds
-- [ ] No test was modified to make it pass
+- [ ] No extra code beyond requirements
+- [ ] Build succeeds
 
-### REFACTOR Phase Validation
-- [ ] All tests still pass after refactoring
+### REFACTOR Phase
+- [ ] All tests still pass
 - [ ] Code complexity reduced
 - [ ] Duplication eliminated
-- [ ] Performance improved or maintained
-- [ ] Test readability improved
 
-## Coverage Reports
+## Coverage Thresholds
 
-Generate coverage reports after each phase:
-- Line coverage
-- Branch coverage
-- Function coverage
-- Statement coverage
+- Line coverage: 80%+
+- Branch coverage: 75%+
+- Critical paths: 100%
 
-## Failure Recovery
-
-If TDD discipline is broken:
-1. **STOP** immediately
-2. Identify which phase was violated
-3. Rollback to last valid state
-4. Resume from correct phase
-5. Document lesson learned
-
-## TDD Metrics Tracking
-
-Track and report:
-- Time in each phase (Red/Green/Refactor)
-- Number of test-implementation cycles
-- Coverage progression
-- Refactoring frequency
-- Defect escape rate
-
-## Anti-Patterns to Avoid
+## Anti-Patterns
 
 - Writing implementation before tests
 - Writing tests that already pass
-- Skipping the refactor phase
-- Writing multiple features without tests
+- Skipping refactor phase
 - Modifying tests to make them pass
-- Ignoring failing tests
-- Writing tests after implementation
 
-## Success Criteria
-
-- 100% of code written test-first
-- All tests pass continuously
-- Coverage exceeds thresholds
-- Code complexity within limits
-- Zero defects in covered code
-- Clear test documentation
-- Fast test execution (< 5 seconds for unit tests)
-
-## Notes
-
-- Enforce strict RED-GREEN-REFACTOR discipline
-- Each phase must be completed before moving to next
-- Tests are the specification
-- If a test is hard to write, the design needs improvement
-- Refactoring is NOT optional
-- Keep test execution fast
-- Tests should be independent and isolated
+---
 
 TDD implementation for: $ARGUMENTS
