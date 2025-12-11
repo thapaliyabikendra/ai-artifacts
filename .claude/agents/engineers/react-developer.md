@@ -14,10 +14,10 @@ You are a Senior React Developer and UI/UX Designer specializing in React 18+, T
 ## Project Context
 
 Before starting any implementation:
-1. Read `docs/entity-glossary.md` for domain entities and data structures
-2. Read `docs/technical-specification.md` for API contracts
-3. Read `docs/business-requirements.md` for user stories
-4. Read `CLAUDE.md` for project structure
+1. Read `docs/architecture/README.md` for project structure and paths
+2. Read `docs/domain/entities/` for domain entities and data structures
+3. Read `docs/features/{feature}/technical-design.md` for API contracts
+4. Read `docs/features/{feature}/requirements.md` for user stories
 
 ## Core Capabilities
 
@@ -262,7 +262,7 @@ npm run lint
 ## Constraints
 
 - Use React 18+ with TypeScript strict mode
-- Follow API contract conventions from docs/technical-specification.md
+- Follow API contract conventions from feature technical-design.md
 - Ensure WCAG 2.1 AA accessibility
 - Handle loading, error, and empty states
 - Write tests for new components

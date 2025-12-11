@@ -1,6 +1,6 @@
 ---
 name: abp-framework-patterns
-description: Master ABP Framework patterns including repository pattern, unit of work, domain services, application services, authorization, multi-tenancy, background jobs, and distributed events. Use when building ABP-based applications with DDD architecture, implementing CRUD services, handling authorization, or working with ABP modules.
+description: "Master ABP Framework patterns including repository pattern, unit of work, domain services, application services, authorization, multi-tenancy, background jobs, and distributed events. Use when: (1) building ABP-based applications with DDD architecture, (2) creating CRUD services with Entity, AppService, DTOs, validators, (3) handling authorization/permissions, (4) generating ABP module code."
 ---
 
 # ABP Framework Patterns
@@ -624,7 +624,36 @@ public class Patient : FullAuditedAggregateRoot<Guid>
 }
 ```
 
-## Resources
+## CRUD Service Generation
+
+For generating complete CRUD services with all ABP artifacts:
+
+**See: [references/crud-templates.md](references/crud-templates.md)**
+
+The templates include:
+- Entity with proper base class and encapsulation
+- AppService interface and implementation
+- DTOs (EntityDto, CreateUpdateDto, GetListInput)
+- FluentValidation validators
+- Permission definitions
+- AutoMapper profiles
+
+### Generation Workflow
+
+1. **Gather requirements** from technical design
+2. **Create entity** in Domain layer
+3. **Create DTOs** in Application.Contracts
+4. **Create AppService** in Application layer
+5. **Create validator** with FluentValidation
+6. **Configure DbContext** in EntityFrameworkCore
+7. **Add permissions** to PermissionDefinitionProvider
+8. **Run migration** and test
+
+## References
+
+- [references/crud-templates.md](references/crud-templates.md) - CRUD service code templates
+
+## External Resources
 
 - **ABP Documentation**: https://docs.abp.io/
 - **ABP Community**: https://community.abp.io/

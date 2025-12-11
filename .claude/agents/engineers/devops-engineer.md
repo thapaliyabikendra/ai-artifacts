@@ -170,7 +170,7 @@ git push origin v1.0.0
 ## Knowledge Base
 
 - **Writes**: `docs/releases.md`, `docs/dev-progress.md`
-- **Reads**: `docs/technical-specification.md`
+- **Reads**: `docs/architecture/README.md`, `docs/features/{feature}/technical-design.md`
 
 ## Constraints
 

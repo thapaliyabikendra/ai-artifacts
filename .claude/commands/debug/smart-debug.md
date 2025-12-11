@@ -1,4 +1,29 @@
-You are an expert AI-assisted debugging specialist with deep knowledge of modern debugging tools, observability platforms, and automated root cause analysis.
+---
+description: Debug issues with AI-powered root cause analysis, fix implementation, and verification
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+argument-hint: "<error-message-or-description>" [--fix] [--verify]
+---
+
+# Smart Debug Command
+
+AI-powered debugging with optional fix and verification workflow.
+
+**Arguments**: $ARGUMENTS
+
+## Workflow Overview
+
+```
+┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐
+│ 1.Diagnose│ → │ 2.Fix     │ → │ 3.Verify  │ → │ 4.Review  │
+│ (debugger)│   │ (abp-     │   │ (qa-      │   │ (code-    │
+│           │   │ developer)│   │ engineer) │   │ reviewer) │
+└───────────┘   └───────────┘   └───────────┘   └───────────┘
+```
+
+**Default**: Stage 1 only (diagnosis)
+**With `--fix`**: Stages 1-2 (diagnosis + fix)
+**With `--verify`**: Stages 1-3 (diagnosis + fix + test)
+**With `--full`**: Stages 1-4 (full workflow)
 
 ## Context
 
@@ -91,16 +116,62 @@ AI-powered code flow analysis:
 - Similar bug pattern identification
 - Fix complexity estimation
 
-### 8. Fix Implementation
-AI generates fix with:
-- Code changes required
-- Impact assessment
-- Risk level
-- Test coverage needs
-- Rollback strategy
+### 8. Fix Implementation (--fix flag)
 
-### 9. Validation
-Post-fix verification:
+If `--fix` flag provided, use Task tool with `subagent_type="abp-developer"`:
+
+```
+Implement fix for the diagnosed issue.
+
+Input: Root cause analysis from Stage 1
+Context: Read docs/architecture/README.md, examine affected code
+Skills: Apply abp-framework-patterns, error-handling-patterns
+
+Requirements:
+- Minimal change to fix the issue
+- Follow existing code patterns
+- Add logging for the fix
+- Consider edge cases
+```
+
+**Checkpoint**: Fix implemented, build succeeds.
+
+### 9. Verification (--verify flag)
+
+If `--verify` flag provided, use Task tool with `subagent_type="qa-engineer"`:
+
+```
+Verify the fix and add regression test.
+
+Input: Fix implementation from Stage 2
+Context: Read existing tests, understand the bug
+Skills: Apply xunit-testing-patterns
+
+Requirements:
+- Add regression test for the bug
+- Verify fix doesn't break existing tests
+- Test edge cases identified in diagnosis
+```
+
+**Checkpoint**: Tests pass, regression test added.
+
+### 10. Code Review (--full flag)
+
+If `--full` flag provided, use Task tool with `subagent_type="code-reviewer"`:
+
+```
+Review the fix implementation.
+
+Input: All changed files
+Context: Read docs/architecture/patterns.md
+Skills: Apply code-review-excellence
+
+Checklist: Minimal change, no side effects, proper error handling.
+```
+
+**Checkpoint**: No critical issues.
+
+### 11. Validation (Manual)
 - Run test suite
 - Performance comparison (baseline vs fix)
 - Canary deployment (monitor error rate)
@@ -169,6 +240,38 @@ Provide structured report:
 5. **Prevention**: Tests, monitoring, documentation
 
 Focus on actionable insights. Use AI assistance throughout for pattern recognition, hypothesis generation, and fix validation.
+
+## Options
+
+| Option | Stages | Description |
+|--------|--------|-------------|
+| (default) | 1 | Diagnosis only |
+| `--fix` | 1-2 | Diagnosis + fix implementation |
+| `--verify` | 1-3 | Diagnosis + fix + test verification |
+| `--full` | 1-4 | Full workflow with code review |
+
+## Output Summary
+
+```
+## Bug Fix: {issue-description}
+
+### Diagnosis
+- Root Cause: [description]
+- Affected Files: [list]
+- Risk Level: Low/Medium/High
+
+### Fix (if --fix)
+- Files Changed: [list]
+- Build Status: Pass/Fail
+
+### Verification (if --verify)
+- Tests Added: [count]
+- Test Status: Pass/Fail
+
+### Review (if --full)
+- Issues Found: [count]
+- Recommendations: [list]
+```
 
 ---
 

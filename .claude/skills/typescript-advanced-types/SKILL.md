@@ -1,6 +1,6 @@
 ---
 name: typescript-advanced-types
-description: Master TypeScript's advanced type system including generics, conditional types, mapped types, template literals, and utility types for building type-safe applications. Use when implementing complex type logic, creating reusable type utilities, or ensuring compile-time type safety in TypeScript projects.
+description: "Master TypeScript's advanced type system including generics, conditional types, mapped types, and React TypeScript patterns. Use when: (1) implementing complex type logic, (2) creating reusable type utilities, (3) typing React components, hooks, and events, (4) ensuring compile-time type safety."
 ---
 
 # TypeScript Advanced Types
@@ -708,6 +708,226 @@ type ShouldError = ExpectError<AssertEqual<string, number>>;
 - Cache complex type computations
 - Limit recursion depth in recursive types
 - Use build tools to skip type checking in production
+
+## React TypeScript Patterns
+
+### Generic Components
+
+```typescript
+// Generic list component with type-safe props
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  keyExtractor: (item: T) => string;
+}
+
+function List<T>({ items, renderItem, keyExtractor }: ListProps<T>) {
+  return (
+    <ul>
+      {items.map(item => (
+        <li key={keyExtractor(item)}>{renderItem(item)}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Usage with full type inference
+<List
+  items={patients}
+  renderItem={p => <PatientCard patient={p} />}
+  keyExtractor={p => p.id}
+/>
+```
+
+### Typed Hooks
+
+```typescript
+// Generic state hook for API states
+type ApiState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: string };
+
+function useApiState<T>() {
+  const [state, setState] = useState<ApiState<T>>({ status: 'idle' });
+
+  const setLoading = () => setState({ status: 'loading' });
+  const setSuccess = (data: T) => setState({ status: 'success', data });
+  const setError = (error: string) => setState({ status: 'error', error });
+
+  return { state, setLoading, setSuccess, setError };
+}
+
+// Type-safe state rendering
+function renderState<T>(state: ApiState<T>, render: (data: T) => ReactNode) {
+  switch (state.status) {
+    case 'idle':
+      return null;
+    case 'loading':
+      return <Spinner />;
+    case 'success':
+      return render(state.data); // Type narrowed to { data: T }
+    case 'error':
+      return <ErrorMessage message={state.error} />;
+  }
+}
+```
+
+### Context with Type Safety
+
+```typescript
+// Define context value type
+interface AuthContextValue {
+  user: UserDto | null;
+  login: (credentials: LoginDto) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+// Create context with null default
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+// Type-safe hook that throws if used outside provider
+function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+}
+
+// Provider component
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserDto | null>(null);
+
+  const value: AuthContextValue = {
+    user,
+    isAuthenticated: !!user,
+    login: async (credentials) => {
+      const user = await authService.login(credentials);
+      setUser(user);
+    },
+    logout: () => setUser(null),
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+```
+
+### Event Handler Types
+
+```typescript
+// Properly typed form handlers
+interface FormProps {
+  onSubmit: (data: CreatePatientDto) => void;
+}
+
+function PatientForm({ onSubmit }: FormProps) {
+  // Form submit handler
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    onSubmit({
+      firstName: formData.get('firstName') as string,
+      lastName: formData.get('lastName') as string,
+      email: formData.get('email') as string,
+    });
+  };
+
+  // Input change handler
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    console.log(e.target.name, e.target.value);
+  };
+
+  // Button click handler
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    console.log('Button clicked', e.currentTarget.name);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="firstName" onChange={handleChange} />
+      <input name="lastName" onChange={handleChange} />
+      <input name="email" type="email" onChange={handleChange} />
+      <button type="submit" onClick={handleClick}>Submit</button>
+    </form>
+  );
+}
+```
+
+### Common React Event Types
+
+| Event | Type |
+|-------|------|
+| Form submit | `React.FormEventHandler<HTMLFormElement>` |
+| Input change | `React.ChangeEventHandler<HTMLInputElement>` |
+| Button click | `React.MouseEventHandler<HTMLButtonElement>` |
+| Key press | `React.KeyboardEventHandler<HTMLInputElement>` |
+| Focus | `React.FocusEventHandler<HTMLInputElement>` |
+| Drag | `React.DragEventHandler<HTMLDivElement>` |
+
+### Ref Types
+
+```typescript
+// useRef with element type
+const inputRef = useRef<HTMLInputElement>(null);
+const divRef = useRef<HTMLDivElement>(null);
+
+// Forwarding refs with generic component
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, ...props }, ref) => (
+    <label>
+      {label}
+      <input ref={ref} {...props} />
+    </label>
+  )
+);
+
+// Usage
+const ref = useRef<HTMLInputElement>(null);
+<Input ref={ref} label="Name" />
+```
+
+### Children Props
+
+```typescript
+// Basic children
+interface CardProps {
+  children: React.ReactNode;
+  title: string;
+}
+
+// Render prop pattern
+interface DataFetcherProps<T> {
+  url: string;
+  children: (data: T, loading: boolean) => React.ReactNode;
+}
+
+function DataFetcher<T>({ url, children }: DataFetcherProps<T>) {
+  const { data, isLoading } = useQuery<T>({ queryKey: [url], queryFn: () => fetch(url) });
+  return <>{children(data as T, isLoading)}</>;
+}
+
+// Usage
+<DataFetcher<Patient[]> url="/api/patients">
+  {(patients, loading) => loading ? <Spinner /> : <PatientList patients={patients} />}
+</DataFetcher>
+```
+
+## Integration Points
+
+This skill is used by:
+- **react-developer**: TypeScript patterns in React components
+- **code-reviewer**: Type safety validation during reviews
 
 ## Resources
 
