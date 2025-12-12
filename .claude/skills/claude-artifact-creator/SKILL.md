@@ -1,320 +1,286 @@
 ---
 name: claude-artifact-creator
-description: "Create and improve Claude Code artifacts (skills, agents, commands). Use when: (1) \"create a skill for...\", (2) \"create an agent that...\", (3) \"make a command for...\", (4) \"help me extend Claude Code\", (5) \"improve this agent/skill/command\", (6) \"review my artifacts\", (7) analyzing staged changes for artifact improvements, (8) \"consolidate these agents/skills\"."
+description: Creates, improves, and validates Claude Code artifacts (skills, agents, commands, hooks). Use when creating domain expertise skills, specialized task agents, user-invoked commands, extending Claude Code capabilities, improving existing artifacts, reviewing artifact quality, analyzing code for automation opportunities, or consolidating duplicate artifacts.
 ---
 
 # Claude Artifact Creator
 
-Create, improve, and maintain Claude Code extensions (skills, agents, commands).
+Creates, improves, and maintains Claude Code extensions following official best practices.
 
-## Project Guidelines
+## When to Use This Skill
 
-**IMPORTANT**: Before creating or modifying artifacts, read:
-- `.claude/GUIDELINES.md` - Organization rules, decision flowcharts, agent/skill/command patterns
-- `CLAUDE.md` - Project-specific agent inventory and skill list
+- Creating a new skill for domain expertise or file processing
+- Creating an agent for specialized tasks with context isolation
+- Creating a command for user-invoked shortcuts
+- Improving or refactoring existing artifacts
+- Reviewing artifacts against quality standards
+- Analyzing staged changes for automation opportunities
+- Consolidating duplicate or overlapping artifacts
 
-All created artifacts must follow the guidelines in these files.
+## Core Principle: Concise is Key
 
-## Capabilities
+The context window is a shared resource. Before adding content, ask:
+- "Does Claude really need this?" - Claude is already smart
+- "Can this be in a reference file?" - Progressive disclosure
+- "Does this justify its token cost?" - Every line has a cost
 
-| Capability | Description |
-|------------|-------------|
-| **Create** | Generate new artifacts from templates |
-| **Improve** | Enhance existing artifacts based on context or staged changes |
-| **Review** | Audit artifacts against best practices |
-| **Consolidate** | Merge duplicate or overlapping artifacts |
+## Core Capabilities
 
-## Quick Decision
+1. **Create** - Generate artifacts from templates with proper structure
+2. **Improve** - Enhance based on official best practices and patterns
+3. **Review** - Audit against quality checklist and anti-patterns
+4. **Consolidate** - Merge duplicate artifacts into focused ones
 
-| If you need... | Create a... | Key Feature |
-|----------------|-------------|-------------|
-| Auto-triggered domain expertise | **Skill** | Progressive disclosure |
-| Complex tasks with context isolation | **Agent** | Separate context window |
-| User-invoked shortcuts | **Command** | Explicit `/cmd` trigger |
+## Quick Start
 
-See [references/decision-guide.md](references/decision-guide.md) for detailed comparison.
+**Create a skill:**
+```bash
+python scripts/init_skill.py pdf-processor --path .claude/skills --template tool
+```
+
+**Create an agent:**
+```bash
+python scripts/init_agent.py code-reviewer --path .claude/agents --template reviewer --category reviewers
+```
+
+**Create a command:**
+```bash
+python scripts/init_command.py run-tests --path .claude/commands --template workflow --category tdd
+```
+
+## Key Patterns
+
+### 1. Decision Pattern
+```
+User triggers explicitly → COMMAND
+Claude auto-detects → SKILL (no isolation) or AGENT (with isolation)
+Deterministic on events → HOOK
+```
+
+### 2. Progressive Disclosure
+```
+Level 1: description (~100 tokens) → Trigger matching
+Level 2: SKILL.md body (<5k tokens) → When activated
+Level 3: references/ → On-demand deep dives
+```
+
+### 3. Artifact Limits
+```
+Skill SKILL.md: <500 lines
+Agent prompt: <150 lines
+References: One level deep (no nested)
+```
+
+### 4. Description Pattern
+```yaml
+# Good: Third-person with triggers
+description: Processes PDF files for text extraction and form filling.
+  Use when working with PDFs, extracting text, or filling forms.
+
+# Bad: First-person or vague
+description: I can help you with documents
+```
+
+## YAML Validation Rules
+
+| Field | Requirements |
+|-------|--------------|
+| `name` | Max 64 chars, lowercase, hyphens only, no reserved words (anthropic, claude) |
+| `description` | Max 1024 chars, third-person voice, 3+ trigger scenarios, no XML tags |
+| `tools` | Comma-separated; omitting grants ALL tools (including MCP) |
+| `model` | `haiku` (fast), `sonnet` (balanced), `opus` (powerful) |
+| `permissionMode` | `default`, `acceptEdits`, `bypassPermissions` |
 
 ## Decision Flowchart
 
 ```
 What do you need?
 │
-├─ "User explicitly triggers action" → COMMAND
-│   └─ Needs multiple files/scripts? → Consider SKILL instead
-│
-├─ "Claude should auto-detect when to use" → SKILL or AGENT
-│   └─ Needs context isolation?
-│       ├─ YES → AGENT (separate context window)
-│       └─ NO → SKILL (progressive disclosure)
-│
-└─ "Complex multi-step task with specialized persona" → AGENT
+├─ Deterministic action on events? → HOOK
+├─ User explicitly triggers with /cmd? → COMMAND
+├─ Claude auto-detects when to use?
+│   ├─ Needs context isolation? → AGENT
+│   └─ Progressive disclosure enough? → SKILL
+└─ Complex multi-step with persona? → AGENT
 ```
 
 ## Creation Workflow
 
-### Step 1: Identify Artifact Type
+### Step 1: Identify Type
 
-Ask these questions:
-
-| Question | Yes → | No → |
-|----------|-------|------|
-| Should user invoke explicitly with `/command`? | Command | Continue |
-| Needs separate context window (isolation)? | Agent | Continue |
-| Auto-triggered domain knowledge? | Skill | Command |
+```
+Type Decision Checklist:
+- [ ] User invokes with /command? → Command
+- [ ] Needs separate context window? → Agent
+- [ ] Auto-triggered domain knowledge? → Skill
+- [ ] Shell action on tool events? → Hook
+```
 
 ### Step 2: Gather Requirements
 
-**For all types:**
-1. What specific tasks will this handle?
-2. Can you show 2-3 example requests?
-3. What outputs should it produce?
-
-**Additional for Skills:**
-- What resources are needed? (scripts, templates, references)
-- What are the trigger scenarios?
-
-**Additional for Agents:**
-- What team role does this represent?
-- What tools does it need?
-- Should it auto-approve edits?
-
-**Additional for Commands:**
-- What arguments does it accept?
-- What phases does it have?
+**Skills**: Trigger scenarios (3+), resources needed, primary workflow
+**Agents**: Team role, tools needed (least privilege), permission mode
+**Commands**: Arguments, phases, expected output
 
 ### Step 3: Initialize
 
-**Skill:**
-```bash
-python scripts/init_skill.py <name> --path .claude/skills --template <type>
+| Type | Command |
+|------|---------|
+| Skill | `python scripts/init_skill.py <name> --template <type>` |
+| Agent | `python scripts/init_agent.py <name> --template <type> --category <cat>` |
+| Command | `python scripts/init_command.py <name> --template <type> --category <cat>` |
+
+**Templates:**
+- Skills: `default`, `tool`, `workflow`, `domain`, `analysis`, `integration`, `generator`, `pattern`
+- Agents: `architect`, `reviewer`, `developer`, `coordinator`, `specialist`
+- Commands: `review`, `generate`, `debug`, `workflow`, `git`, `refactor`
+
+### Step 4: Test
+
+```
+Testing Checklist:
+- [ ] Customize all placeholders ([DOMAIN], [TARGET])
+- [ ] Test with Haiku - enough guidance?
+- [ ] Test with Sonnet - clear and efficient?
+- [ ] Test with Opus - not over-explained?
+- [ ] Verify triggers activate correctly
 ```
 
-Templates: `default`, `tool`, `workflow`, `domain`, `analysis`, `integration`, `generator`, `pattern`
+## Built-in Subagents
 
-**Agent:**
-```bash
-python scripts/init_agent.py <name> --path .claude/agents --template <type> [--category <cat>]
-```
+Claude Code includes built-in agents (cannot be modified):
 
-Templates (by function): `architect`, `reviewer`, `developer`, `coordinator`, `specialist`
-Templates (by role): `manager`, `tech-lead`, `qa-engineer`, `devops`, `security`
-Categories: `architects`, `reviewers`, `engineers`, `specialists`, `language-experts`
+| Agent | Purpose | Mode |
+|-------|---------|------|
+| **Plan** | Research before presenting plan | Read-only, plan mode |
+| **Explore** | Fast codebase search | Read-only (`ls`, `find`, `cat`, `head`, `tail`) |
 
-**Command:**
-```bash
-python scripts/init_command.py <name> --path .claude/commands --template <type> [--category <cat>]
-```
+**Note**: Subagents cannot spawn other subagents.
 
-Templates: `review`, `generate`, `debug`, `workflow`, `git`, `refactor`
-Categories: `review`, `generate`, `debug`, `refactor`, `tdd`, `feature`, `git`, `explain`, `optimize`, `team`
+## Tool Permissions by Role
 
-### Step 4: Customize & Test
+| Role | Recommended Tools |
+|------|-------------------|
+| Read-only (reviewers) | `Read, Grep, Glob` |
+| Research | `Read, Grep, Glob, WebFetch, WebSearch` |
+| Code writers | `Read, Write, Edit, Bash, Glob, Grep` |
+| Documentation | `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` |
 
-1. Edit the generated file to customize placeholders
-2. Replace `[DOMAIN]`, `[TARGET]`, etc. with specific values
-3. Test the artifact:
-   - Skill: Request should auto-trigger based on description
-   - Agent: "Use the [name] agent to [task]"
-   - Command: `/command-name [arguments]`
+⚠️ **Warning**: Omitting `tools` grants ALL tools including MCP. Always whitelist explicitly.
 
-## Improvement Workflow
+## Hook Events
 
-### From Staged Changes
+| Event | When | Use Case |
+|-------|------|----------|
+| `PreToolUse` | Before tool | Block/validate (exit 2 = block) |
+| `PostToolUse` | After tool | Auto-format, logging |
+| `SubagentStop` | Agent completes | HITL control |
+| `Notification` | Alert | Custom notifications |
+| `Stop` | Response done | Cleanup |
+| `SessionStart/End` | Session lifecycle | Init/cleanup |
+| `PreCompact` | Before compaction | Custom summarization |
 
-When reviewing staged changes (`git diff --staged`):
+## Best Practices
 
-1. **Identify patterns** - Are there repeated manual tasks?
-2. **Suggest automation:**
-   - Repeated file operations → New skill
-   - Recurring review tasks → New agent
-   - Frequent commands → New command
-3. **Propose improvements** to existing artifacts
+1. **Concise over comprehensive** - Claude is smart; add only what it doesn't know
+2. **Show, don't tell** - Examples beat descriptions
+3. **Third-person descriptions** - Required for system prompt injection
+4. **3+ trigger scenarios** - Specific scenarios in description ensure activation
+5. **Least privilege tools** - Only grant necessary tools
+6. **One level deep references** - No nested references (causes partial reads)
+7. **Test all models** - What works for Opus may need more detail for Haiku
+8. **Validate before shipping** - Run `scripts/validate.py --strict`
 
-### From Conversation Context
+## Common Pitfalls
 
-1. **Analyze patterns** - What requests keep recurring?
-2. **Identify gaps** - What's missing from current artifacts?
-3. **Suggest:**
-   - New artifacts for unaddressed needs
-   - Improvements to existing artifacts
-   - Consolidation of overlapping artifacts
+| Pitfall | Detection | Fix |
+|---------|-----------|-----|
+| Vague triggers | Description <100 chars | Add 3+ specific scenarios |
+| Abstract only | No code blocks | Add before/after examples |
+| Monolithic | >500 lines | Move to references/ |
+| Kitchen sink | Lists 5+ domains | Create specialized artifacts |
+| Embedded code in agent | Code blocks in agent | Extract to skill |
+| First-person description | "I can help" | Use third-person |
 
-### Review Existing Artifacts
-
-Run the validator:
-```bash
-python scripts/validate.py <path-to-skill> [--strict]
-```
-
-**Quality Checklist:**
-- [ ] Description has 3+ explicit trigger scenarios
-- [ ] Entry point is clear (user knows where to start)
-- [ ] Concrete examples, not abstract descriptions
-- [ ] No duplicate content between files
-- [ ] Scripts tested and working
-- [ ] Placeholders completed
-
-## Type-Specific Guides
-
-### Skills
-
-**Structure:**
-```
-skill-name/
-├── SKILL.md              # Required - entry point (<500 lines)
-├── scripts/              # Executable code (Python/Bash)
-├── references/           # Documentation loaded on-demand
-└── assets/               # Output templates, boilerplate
-```
-
-**Key principles:**
-- Progressive disclosure (3-level loading)
-- Specific triggers in description
-- Keep SKILL.md under 500 lines
-
-See [references/skills/skill-types.md](references/skills/skill-types.md) for archetypes.
-
-### Agents
-
-**Structure:**
-```yaml
----
-name: agent-name
-description: "Purpose. Use PROACTIVELY when..."
-tools: Read, Write, Edit, Bash
-model: sonnet
-permissionMode: acceptEdits
----
-
-# Agent instructions...
-```
-
-**Key principles:**
-- Single responsibility
-- Clear triggers ("Use PROACTIVELY when...")
-- Least privilege (only necessary tools)
-- Context isolation (separate context window)
-
-See [references/agents/agent-categories.md](references/agents/agent-categories.md) for role definitions.
-
-### Commands
-
-**Structure:**
-```yaml
----
-description: Brief description
-allowed-tools: Bash(git:*), Read
-argument-hint: [file] [options]
----
-
-# Command instructions using $ARGUMENTS...
-```
-
-**Key principles:**
-- User-invoked (`/cmd`)
-- Use `$ARGUMENTS` for user input
-- Use `!` prefix for bash execution in content
-- Single file (no subdirectories)
-
-See [references/commands/command-patterns.md](references/commands/command-patterns.md) for patterns.
-
-## Common Anti-Patterns
-
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| Vague triggers | Artifact doesn't activate | List 3+ specific scenarios |
-| Abstract-only | Inconsistent outputs | Add before/after examples |
-| Monolithic | Wastes context | Split to references (<500 lines) |
-| Kitchen sink | Unfocused | Create specialized artifacts |
-| Missing validation | Silent failures | Add verification steps |
-| Duplicate content | Maintenance burden | Consolidate into one artifact |
-| **Embedded code in agents** | Agent too large | Extract to skills |
-| **Embedded commands in agents** | Not reusable | Extract to commands |
-
-See [references/anti-patterns.md](references/anti-patterns.md) for detailed guidance.
+See [references/anti-patterns.md](references/anti-patterns.md) for comprehensive list.
 
 ## Agent Refactoring
 
-When agents grow too large (>150 lines), extract content:
+When agents grow >150 lines:
 
-| Content Type | Extract To | Reference As |
-|--------------|------------|--------------|
+| Content | Extract To | Reference As |
+|---------|------------|--------------|
 | Code patterns | Skill | "Apply `skill-name` skill" |
 | Output templates | Skill | "Follow `skill-name` format" |
 | CLI commands | Command | "Use `/command-name`" |
-| Project structure | docs/architecture/README.md | "Read docs/architecture/README.md" |
+| Project structure | docs/ | "Read docs/..." |
 
-**Detection signs:**
-- Code blocks (`\`\`\`csharp`, `\`\`\`typescript`) in agent = Extract to skill
-- "Run this command: ..." in agent = Extract to command
-- Repeated patterns across agents = Create shared skill
+## Success Metrics
 
-See `.claude/GUIDELINES.md` for detailed agent separation of concerns rules.
+Track these for artifact quality:
 
-## Templates Reference
+| Metric | Target |
+|--------|--------|
+| Trigger accuracy | Activates on relevant requests |
+| Output consistency | Same quality across similar inputs |
+| Model compatibility | Works with Haiku, Sonnet, Opus |
+| Line count | Skills <500, Agents <150 |
+| Description length | 100-1024 chars with triggers |
 
-### Agent Templates by Role
+## Quality Checklist
 
-| Role | Template | Best For |
-|------|----------|----------|
-| Manager | `manager` | Project planning, sprint coordination |
-| Tech Lead | `tech-lead` | Architecture decisions, mentoring |
-| Developer | `developer` | Implementation, coding |
-| QA Engineer | `qa-engineer` | Testing, quality assurance |
-| DevOps | `devops` | CI/CD, deployment |
-| Security | `security` | Security audits, threat modeling |
+```
+Artifact Quality Review:
+- [ ] Description: third-person, 100-1024 chars, 3+ triggers
+- [ ] Name: lowercase, hyphens, max 64 chars
+- [ ] Entry point clear (user knows where to start)
+- [ ] Concrete examples, not just descriptions
+- [ ] No duplicate content across files
+- [ ] References one level deep only
+- [ ] Tested with Haiku, Sonnet, and Opus
+- [ ] Under line limits (Skills: 500, Agents: 150)
+- [ ] Validation/verification steps included
+- [ ] Error recovery guidance present
+```
 
-### Agent Templates by Function
+## Integration Patterns
 
-| Function | Template | Best For |
-|----------|----------|----------|
-| Architect | `architect` | System design, technical planning |
-| Reviewer | `reviewer` | Code review, quality checks |
-| Developer | `developer` | Implementation |
-| Coordinator | `coordinator` | Multi-agent orchestration |
-| Specialist | `specialist` | Deep domain expertise |
+### Command → Agent → Skill
 
-### Skill Templates
+```
+/add-feature (command)
+  └─ Uses backend-architect (agent)
+       └─ Applies api-design-principles (skill)
+```
 
-| Template | Best For | Example |
-|----------|----------|---------|
-| `default` | General purpose | - |
-| `tool` | File processing, CLI tools | PDF processor |
-| `workflow` | Multi-step processes | Code review |
-| `domain` | Business knowledge, schemas | Database schema |
-| `analysis` | Audits, assessments | Security audit |
-| `integration` | API/service connections | API connector |
-| `generator` | Code/file generation | CRUD service |
-| `pattern` | Best practices, standards | Error handling |
+### Skill as Knowledge, Command as Action
 
-### Command Templates
-
-| Template | Best For | Example |
-|----------|----------|---------|
-| `review` | Code analysis | `/code-review` |
-| `generate` | Scaffolding | `/scaffold-module` |
-| `debug` | Error diagnosis | `/smart-debug` |
-| `workflow` | Multi-phase processes | `/feature-dev` |
-| `git` | Git automation | `/pr-workflow` |
-| `refactor` | Code improvement | `/cleanup` |
+```
+Rule: "Knowing" = Skill, "Doing" = Command
+      "Doing with Knowledge" = Command referencing Skills
+```
 
 ## References
 
-### Skill Documentation
-- [references/skills/skill-types.md](references/skills/skill-types.md) - Skill archetypes
-- [references/skills/template-patterns.md](references/skills/template-patterns.md) - Template patterns
+**By Type:**
+- [references/skills/skill-types.md](references/skills/skill-types.md) - Archetypes
+- [references/agents/agent-categories.md](references/agents/agent-categories.md) - Role definitions
+- [references/commands/command-patterns.md](references/commands/command-patterns.md) - Patterns
 
-### Agent Documentation
-- [references/agents/agent-categories.md](references/agents/agent-categories.md) - Role categories
-- [references/agents/context-isolation.md](references/agents/context-isolation.md) - Context management
-- [references/agents/orchestration-patterns.md](references/agents/orchestration-patterns.md) - Multi-agent patterns
-
-### Command Documentation
-- [references/commands/command-patterns.md](references/commands/command-patterns.md) - Command patterns
-
-### Cross-Cutting
-- [references/decision-guide.md](references/decision-guide.md) - Skill vs Command vs Agent
+**Cross-Cutting:**
+- [references/decision-guide.md](references/decision-guide.md) - Skill vs Agent vs Command
 - [references/anti-patterns.md](references/anti-patterns.md) - What to avoid
-- [references/output-patterns.md](references/output-patterns.md) - Output formatting
-- [references/workflows.md](references/workflows.md) - Workflow patterns
-- [references/agent-refactoring-guide.md](references/agent-refactoring-guide.md) - Extract skills/commands from agents
+- [references/agent-refactoring-guide.md](references/agent-refactoring-guide.md) - Extract from agents
+
+**Project Guidelines:**
+- `.claude/GUIDELINES.md` - Official organization rules
+- `CLAUDE.md` - Project-specific context
+
+## Next Steps
+
+1. **Read GUIDELINES.md** - Understand official best practices
+2. **Review existing artifacts** - Run `scripts/validate.py` on current artifacts
+3. **Identify automation opportunities** - Analyze `git diff --staged` for patterns
+4. **Create focused artifacts** - One purpose per artifact
+5. **Test with multiple models** - Ensure compatibility
+6. **Document decisions** - Why this artifact exists

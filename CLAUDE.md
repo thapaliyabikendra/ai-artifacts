@@ -1,368 +1,134 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working with this repository.
 
 ## Project Overview
 
-This is a **Clinic Management System** - a layered monolith application built on **ABP Framework** using Domain Driven Design (DDD). The system manages patients, appointments, and doctor schedules for a local clinic.
+**Clinic Management System** - A layered monolith built on ABP Framework using Domain Driven Design. Manages patients, appointments, and doctor schedules.
 
-**Tech Stack**: .NET 10, ABP Framework 10.0.1, Entity Framework Core, PostgreSQL, Redis, OpenIddict (OAuth 2.0)
+**Tech Stack**: .NET 10, ABP Framework 10.0.1, Entity Framework Core, PostgreSQL, Redis, OpenIddict
 
-## Repository Structure
+## Quick Reference
 
-```
-ai-artifacts/
-├── api/                    # .NET Backend (ABP Framework)
-│   ├── src/               # Source projects
-│   └── test/              # Test projects
-├── ui/                    # Frontend (React 18+ - planned)
-├── docs/                  # Business requirements documentation
-├── .claude/
-│   ├── agents/            # Specialized sub-agents (BY ROLE)
-│   ├── commands/          # Slash commands (BY ACTION)
-│   ├── skills/            # Domain knowledge skills (BY TOPIC)
-│   └── GUIDELINES.md      # Organization rules & tool selection guide
-└── CLAUDE.md              # This file
-```
+| Action | Command |
+|--------|---------|
+| Build | `dotnet build api/ClinicManagementSystem.slnx` |
+| Run API | `dotnet run --project api/src/ClinicManagementSystem.HttpApi.Host` |
+| Run Migrations | `dotnet run --project api/src/ClinicManagementSystem.DbMigrator` |
+| Run Tests | `dotnet test api/` |
 
-## Claude Code Extension Guide
+For detailed commands and project structure, see **[docs/architecture/README.md](docs/architecture/README.md)**.
 
-For choosing between Agents, Skills, Commands, Hooks, and Output Styles, see **[.claude/GUIDELINES.md](.claude/GUIDELINES.md)**. Key decision factors:
+## Claude Code Extensions
+
+For choosing between Agents, Skills, Commands, and Hooks, see **[.claude/GUIDELINES.md](.claude/GUIDELINES.md)**.
 
 | Mechanism | Invocation | Best For |
 |-----------|------------|----------|
-| **Skill** | Automatic (model-invoked) | Reusable domain expertise |
-| **Agent** | Auto-delegated or explicit | Complex tasks with context isolation |
-| **Command** | Manual (`/cmd`) | Atomic, frequent actions |
+| **Skill** | Automatic | Domain expertise, patterns |
+| **Agent** | Delegated | Complex tasks with context isolation |
+| **Command** | `/cmd` | Atomic, frequent actions |
 
-### Creating or Modifying Claude Artifacts
+**Creating artifacts**: Say "create a skill for..." or "create an agent that..." to auto-trigger the `claude-artifact-creator` skill.
 
-When creating new agents, skills, or commands, or improving existing ones:
-- Say "create a skill for..." or "create an agent that..." to auto-trigger the `claude-artifact-creator` skill
-- The skill provides templates, validation, and ensures guideline compliance
-- All artifacts must follow `.claude/GUIDELINES.md` rules (agents <150 lines, skills <500 lines, etc.)
+## Available Agents (10)
 
-## Build Commands
+Located in `.claude/agents/` organized by role:
 
-All commands should be run from `api/` directory:
+| Category | Count | Examples |
+|----------|-------|----------|
+| **Architects** | 2 | business-analyst, backend-architect |
+| **Engineers** | 3 | abp-developer, react-developer, devops-engineer |
+| **Reviewers** | 3 | code-reviewer, security-engineer, qa-engineer |
+| **Specialists** | 2 | debugger, database-migrator |
 
-```bash
-# Build solution
-dotnet build ClinicManagementSystem.slnx
+**Usage**: `Use the abp-developer agent to implement the Patient service`
 
-# Run API host
-dotnet run --project src/ClinicManagementSystem.HttpApi.Host
+## Available Skills (27)
 
-# Run AuthServer
-dotnet run --project src/ClinicManagementSystem.AuthServer
+Located in `.claude/skills/` organized by topic:
 
-# Run database migrations
-dotnet run --project src/ClinicManagementSystem.DbMigrator
+| Category | Count | Key Skills |
+|----------|-------|------------|
+| **Backend** | 9 | abp-framework-patterns, efcore-patterns, fluentvalidation-patterns |
+| **Microservices** | 3 | distributed-events-advanced, grpc-integration-patterns, bulk-operations-patterns |
+| **API Design** | 2 | api-response-patterns, api-design-principles |
+| **Requirements** | 5 | requirements-engineering, domain-modeling, technical-design-patterns |
+| **Testing** | 3 | xunit-testing-patterns, e2e-testing-patterns, javascript-testing-patterns |
+| **Security** | 1 | security-patterns |
+| **Frontend** | 2 | typescript-advanced-types, modern-javascript-patterns |
+| **DevOps** | 2 | docker-dotnet-containerize, git-advanced-workflows |
 
-# Run all tests
-dotnet test
+Skills are auto-triggered based on context. For ABP patterns, the `abp-framework-patterns` skill provides entity, AppService, DTO, and validation patterns.
 
-# Run specific test project
-dotnet test test/ClinicManagementSystem.Application.Tests
-```
+## Available Commands (9)
 
-## ABP Framework Architecture
+Located in `.claude/commands/` organized by action:
 
-### Layer Dependencies (bottom to top)
-```
-Domain.Shared → Domain → EntityFrameworkCore
-                ↓
-Application.Contracts → Application → HttpApi → HttpApi.Host
-                                  ↓
-                           HttpApi.Client
-```
+| Category | Commands |
+|----------|----------|
+| **Feature** | `/add-feature` - End-to-end feature development |
+| **Generate** | `/generate:entity`, `/generate:filter`, `/generate:migration` |
+| **TDD** | `/tdd-cycle`, `/tdd-red`, `/tdd-refactor` |
+| **Review** | `/review:permissions` |
+| **Debug** | `/smart-debug` |
 
-### Project Responsibilities
+## Feature Development
 
-| Layer | Purpose |
-|-------|---------|
-| `Domain.Shared` | Enums, constants, localization resources shared across all layers |
-| `Domain` | Entities, aggregate roots, domain services, repository interfaces |
-| `Application.Contracts` | DTOs, application service interfaces |
-| `Application` | Application services implementing business logic |
-| `HttpApi` | API controllers, REST endpoints |
-| `HttpApi.Host` | API startup, configuration, dependency injection |
-| `EntityFrameworkCore` | EF Core DbContext, repository implementations, migrations |
-| `AuthServer` | OAuth 2.0 authentication server (OpenIddict) |
-| `DbMigrator` | Database migration console app |
-
-### Key ABP Patterns
-
-- **AppServices**: Inherit from `ApplicationService` or implement `IApplicationService`
-- **DTOs**: Use `CreateUpdateDtoBase`, `EntityDto<TKey>` patterns
-- **Validation**: FluentValidation with ABP integration
-- **Mapperly**: Configure in `*ApplicationMappers.cs` (NOT AutoMapper)
-- **Permissions**: Define in `*Permissions.cs`, grant in module configuration
-
-## Available Sub-Agents
-
-The `.claude/agents/` directory contains 12 specialized agents organized by role:
-
-### Architects (4)
-| Agent | Purpose |
-|-------|---------|
-| `business-analyst` | Requirements, domain management, impact analysis |
-| `backend-architect` | API design, database schema, TSD |
-| `api-documenter` | OpenAPI documentation, developer portals |
-| `docs-architect` | Technical documentation from codebases |
-
-### Engineers (3)
-| Agent | Purpose |
-|-------|---------|
-| `abp-developer` | .NET/ABP Framework backend implementation |
-| `react-developer` | React 18+ frontend with UI/UX |
-| `devops-engineer` | CI/CD, Docker, releases |
-
-### Reviewers (3)
-| Agent | Purpose |
-|-------|---------|
-| `code-reviewer` | Code quality, PR reviews |
-| `security-engineer` | Security audits, STRIDE, OWASP |
-| `qa-engineer` | Test automation (xUnit, Playwright) |
-
-### Specialists (2)
-| Agent | Purpose |
-|-------|---------|
-| `debugger` | Root cause analysis, error diagnosis |
-| `database-migrator` | EF Core migrations, schema management |
-
-**Usage**: `Use the engineers/abp-developer agent to implement the Patient service`
-
-## Available Skills
-
-The `.claude/skills/` directory contains domain knowledge skills:
-
-### Backend Skills
-- **abp-framework-patterns**: ABP repository, UoW, Mapperly, data seeding, multi-tenancy, distributed events
-- **efcore-patterns**: EF Core configuration, PostgreSQL types, migrations, jsonb, full-text search
-- **fluentvalidation-patterns**: DTO validators, async validation, repository checks, localization
-- **openiddict-authorization**: Permissions, RBAC, custom claims, multi-tenant authorization
-- **linq-optimization-patterns**: N+1 prevention, Include patterns, projections, AsNoTracking
-- **debugging-patterns**: Root cause analysis, common ABP/EF/React issues and fixes
-- **csharp-advanced-patterns**: Records, pattern matching, async, LINQ, performance
-- **dotnet-async-patterns**: Async/await, ValueTask, cancellation tokens
-- **error-handling-patterns**: Exception handling, Result types, Polly retry/circuit breaker
-
-### Requirements & Design Skills
-- **requirements-engineering**: User stories, acceptance criteria, BRD patterns
-- **domain-modeling**: Entity definitions, business rules (BR-XXX), impact analysis
-- **technical-design-patterns**: TSD templates, API contracts, database schemas, ADRs
-- **api-design-principles**: REST/GraphQL API design patterns
-- **mermaid-diagram-patterns**: ERD, sequence, flowchart, architecture diagrams
-
-### Testing Skills
-- **xunit-testing-patterns**: xUnit tests for ABP, test data seeders
-- **e2e-testing-patterns**: Playwright automation
-- **javascript-testing-patterns**: Jest, React Testing Library
-
-### Security Skills
-- **security-patterns**: STRIDE threat modeling, OWASP Top 10, security audits
-
-### Frontend Skills
-- **typescript-advanced-types**: Generics, conditional types, mapped types
-- **modern-javascript-patterns**: ES6+, async patterns
-
-### DevOps Skills
-- **docker-dotnet-containerize**: Multi-stage Dockerfiles for .NET
-- **git-advanced-workflows**: Rebasing, cherry-picking, bisect
-
-### Review Skills
-- **code-review-excellence**: PR review best practices
-
-### Workflow Skills
-- **feature-development-workflow**: End-to-end feature development orchestration
-
-### Meta Skills (in `.claude/skills/meta/`)
-- **claude-artifact-creator**: Create and improve Claude artifacts (skills, agents, commands)
-- **prompt-engineering-patterns**: Advanced prompt techniques for LLM interactions
-
-## Available Commands
-
-The `.claude/commands/` directory contains slash commands:
-
-### Feature Commands
-| Command | Purpose |
-|---------|---------|
-| `/add-feature` | End-to-end feature development (6 stages) |
-
-### Generate Commands
-| Command | Purpose |
-|---------|---------|
-| `/generate:entity` | Scaffold complete ABP entity with all layers |
-| `/generate:migration` | Generate and review EF Core migrations |
-
-### TDD Commands
-| Command | Purpose |
-|---------|---------|
-| `/tdd-cycle` | Execute full TDD workflow (red-green-refactor) |
-| `/tdd-red` | Write failing xUnit tests |
-| `/tdd-refactor` | Refactor while keeping tests green |
-
-### Review Commands
-| Command | Purpose |
-|---------|---------|
-| `/review:permissions` | Audit permission definitions and usage |
-
-### Debug Commands
-| Command | Purpose |
-|---------|---------|
-| `/smart-debug` | Intelligent debugging workflow |
-
-## Feature Development Workflow
-
-This project uses automated workflows for end-to-end feature development.
-
-### Quick Start: Add New Feature
+Use the `/add-feature` command for end-to-end feature development:
 
 ```bash
 /add-feature <feature-name> "<requirements>"
 ```
 
-**Example:**
-```bash
-/add-feature patient-management "CRUD for patients with name, email, phone, DOB. Search and filter patients."
-```
+**Example**: `/add-feature patient-management "CRUD for patients with name, email, phone, DOB"`
 
-### Workflow Stages
+The command orchestrates 6 stages through specialized agents (analyze → design → implement → test → review → security). See command help for options (`--stage`, `--review`, `--security`, `--dry-run`).
 
-```
-┌─────────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐
-│ 1.Analyze & │ → │ 2.Design  │ → │ 3.Implement│ → │ 4.Test    │ → │ 5.Review  │ → │ 6.Security│
-│   Require   │   │ (backend- │   │ (abp-     │   │ (qa-      │   │ (code-    │   │ (security-│
-│ (business-  │   │ architect)│   │ developer)│   │ engineer) │   │ reviewer) │   │ engineer) │
-│  analyst)   │   │           │   │           │   │           │   │           │   │           │
-└─────────────┘   └───────────┘   └───────────┘   └───────────┘   └───────────┘   └───────────┘
-```
+## Documentation
 
-**Note**: Stages 5-6 are optional (use `--review`, `--security`, or `--full-review`)
+All domain and project documentation is in **[docs/](docs/README.md)**:
 
-| Stage | Agent | Output | Optional |
-|-------|-------|--------|----------|
-| 1. Analyze & Require | `business-analyst` | `requirements.md`, `impact-analysis.md`, domain updates | No |
-| 2. Design | `backend-architect` | `technical-design.md` | No |
-| 3. Implementation | `abp-developer` | ABP source code | No |
-| 4. Testing | `qa-engineer` | `test-cases.md` + tests | No |
-| 5. Code Review | `code-reviewer` | `review-report.md` | Yes |
-| 6. Security | `security-engineer` | `security-audit.md` | Yes |
+| Folder | Purpose |
+|--------|---------|
+| `docs/domain/` | Business rules, entities, permissions, roles |
+| `docs/architecture/` | Project structure, patterns, API contracts |
+| `docs/features/` | Per-feature requirements, designs, test cases |
 
-### Command Options
-
-```bash
-# Full workflow (Stages 1-4)
-/add-feature patient "Patient CRUD"
-
-# Single stage only
-/add-feature patient --stage analyze
-/add-feature patient --stage design
-/add-feature patient --stage implement
-/add-feature patient --stage test
-/add-feature patient --stage review
-/add-feature patient --stage security
-
-# With optional stages
-/add-feature patient "Patient CRUD" --review        # Stages 1-5
-/add-feature patient "Patient CRUD" --security      # Stages 1-4 + 6
-/add-feature patient "Patient CRUD" --full-review   # Stages 1-6
-
-# Preview without creating files
-/add-feature patient "Patient CRUD" --dry-run
-```
-
-### Generated Code Structure
-
-For a feature named `patient`:
-
-```
-api/src/
-├── ClinicManagementSystem.Domain/
-│   └── Patients/
-│       ├── Patient.cs              # Entity
-│       └── PatientManager.cs       # Domain service (if needed)
-│
-├── ClinicManagementSystem.Application.Contracts/
-│   └── Patients/
-│       ├── IPatientAppService.cs
-│       ├── PatientDto.cs
-│       ├── CreateUpdatePatientDto.cs
-│       └── GetPatientListInput.cs
-│
-├── ClinicManagementSystem.Application/
-│   └── Patients/
-│       ├── PatientAppService.cs
-│       └── PatientDtoValidator.cs
-│
-└── ClinicManagementSystem.EntityFrameworkCore/
-    └── (DbContext configuration)
-```
-
-### ABP Conventions Enforced
-
-- All entities inherit `FullAuditedAggregateRoot<Guid>` (soft delete + auditing)
-- All list endpoints support pagination (`PagedAndSortedResultRequestDto`)
-- All mutations require authorization attributes
-- All input DTOs have FluentValidation validators
-- All code follows ABP naming conventions
-
-### Feature Documentation Templates
-
-Located in `docs/features/_templates/`:
-- `requirements-template.md` - User stories, acceptance criteria
-- `technical-design-template.md` - Entity design, API contracts
-- `test-cases-template.md` - Test cases with xUnit templates
+Agents read from and write to these docs during workflows.
 
 ## Prerequisites
 
 - .NET 10.0+ SDK
-- Node v20.11+ (for AuthServer client libraries)
-- Redis (for distributed caching)
 - PostgreSQL
+- Redis
+- Node v20.11+ (for AuthServer)
 
-Before first run:
-1. Run `abp install-libs` in AuthServer directory for client libraries
-2. Run DbMigrator to create database and seed initial data
+First run: Execute `abp install-libs` in AuthServer, then run DbMigrator.
 
-## Documentation Structure
+## Conventions
 
-The `docs/` folder is organized for efficient agent workflows:
+### Naming
 
-```
-docs/
-├── README.md                    # Documentation hub
-├── domain/                      # Business domain knowledge
-│   ├── README.md               # Domain overview
-│   ├── entities/               # Entity definitions (one per file)
-│   ├── business-rules.md       # BR-XXX format rules
-│   ├── roles.md                # User roles and capabilities
-│   ├── permissions.md          # Permission structure
-│   └── enums.md                # Enumeration definitions
-├── architecture/               # Technical architecture
-│   ├── README.md               # Project paths, build commands
-│   └── patterns.md             # Code patterns, conventions
-├── features/                   # Feature-specific docs
-│   └── {feature}/             # Per-feature documentation
-│       ├── requirements.md
-│       ├── technical-design.md
-│       ├── test-cases.md
-│       ├── review-report.md
-│       └── security-audit.md
-├── backlog.md                  # User stories
-├── decisions.md                # ADRs
-├── releases.md                 # Release history
-└── dev-progress.md             # Activity log
-```
+| Type | Pattern | Example |
+|------|---------|---------|
+| Entity | PascalCase | `Patient`, `DoctorSchedule` |
+| DTO | `{Entity}Dto`, `CreateUpdate{Entity}Dto` | `PatientDto` |
+| AppService | `{Entity}AppService` | `PatientAppService` |
+| Permission | `{Project}.{Resource}.{Action}` | `ClinicManagementSystem.Patients.Create` |
 
-### Agent → Document Access
+### Critical Patterns
 
-| Agent | Primary Docs | Writes |
-|-------|--------------|--------|
-| `business-analyst` | `domain/*` | Entity definitions, rules, permissions, `requirements.md`, `impact-analysis.md` |
-| `backend-architect` | `architecture/`, `domain/entities/` | `technical-design.md` |
-| `abp-developer` | `architecture/`, `features/` | Implementation code |
-| `qa-engineer` | `domain/business-rules.md` | `test-cases.md` |
-| `code-reviewer` | `architecture/patterns.md` | `review-report.md` |
-| `security-engineer` | `domain/permissions.md` | `security-audit.md` |
+- **Entities**: Inherit `FullAuditedAggregateRoot<Guid>` (soft delete + auditing)
+- **Validation**: FluentValidation (not data annotations)
+- **Mapping**: Mapperly in `*ApplicationMappers.cs` (NOT AutoMapper)
+- **Permissions**: Define in `*Permissions.cs`, check with `[Authorize]`
+
+For detailed patterns, apply the `abp-framework-patterns` skill.
+
+### Warnings
+
+- Always run from `api/` directory for dotnet commands
+- Never commit secrets to `.env` files
+- All mutations require authorization attributes
+- Use `WhereIf` pattern for optional filters in queries

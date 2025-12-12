@@ -2,18 +2,168 @@
 
 This document defines the structure, conventions, and decision framework for organizing agents, commands, skills, and other Claude Code extensibility mechanisms in this repository.
 
+> **Sources**: This guide incorporates best practices from:
+> - [Claude Code: Best practices for agentic coding](https://www.anthropic.com/engineering/claude-code-best-practices)
+> - [Building agents with the Claude Agent SDK](https://www.anthropic.com/engineering/building-agents-with-the-claude-agent-sdk)
+> - [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
+> - [Claude Code Docs](https://code.claude.com/docs/en/)
+
 ## Table of Contents
 
-1. [Directory Structure](#directory-structure-overview)
-2. [Choosing the Right Tool](#choosing-the-right-tool)
-3. [Agents](#agents-agents)
-4. [Agent Separation of Concerns](#agent-separation-of-concerns)
-5. [Artifact Portability Rules](#artifact-portability-rules)
-6. [Skills](#skills-skills)
-7. [Commands](#commands-commands)
-8. [Hooks](#hooks)
-9. [Output Styles](#output-styles)
-10. [Quick Reference](#quick-reference)
+1. [Agentic Coding Best Practices](#agentic-coding-best-practices)
+2. [Directory Structure](#directory-structure-overview)
+3. [Choosing the Right Tool](#choosing-the-right-tool)
+4. [Agents](#agents-agents)
+5. [Agent Separation of Concerns](#agent-separation-of-concerns)
+6. [Artifact Portability Rules](#artifact-portability-rules)
+7. [Skills](#skills-skills)
+8. [Commands](#commands-commands)
+9. [Hooks](#hooks)
+10. [Output Styles](#output-styles)
+11. [Quick Reference](#quick-reference)
+
+---
+
+## Agentic Coding Best Practices
+
+These practices come directly from Anthropic's official recommendations for effective agentic coding with Claude Code.
+
+### The Agentic Feedback Loop
+
+Claude operates in a fundamental feedback loop:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│     GATHER CONTEXT → TAKE ACTION → VERIFY WORK → REPEAT    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+This pattern enables Claude to autonomously complete complex workflows by iteratively refining outputs.
+
+### Thinking Modes
+
+Use specific phrases to trigger extended thinking with progressively increasing budgets:
+
+| Phrase | Thinking Level | When to Use |
+|--------|----------------|-------------|
+| `"think"` | Baseline | Standard complex tasks |
+| `"think hard"` | Increased | Multi-step reasoning |
+| `"think harder"` | High | Complex architectural decisions |
+| `"ultrathink"` | Maximum | Critical, high-stakes decisions |
+
+**Example**: "Think hard about the best approach to refactor this authentication system."
+
+### Effective Workflows
+
+#### 1. Explore → Plan → Code → Commit
+
+```
+1. Ask Claude to read relevant files without writing code
+2. Request a plan (use "think" for extended thinking)
+3. Ask Claude to implement the solution
+4. Request commit and PR creation
+```
+
+#### 2. Test-Driven Development (TDD)
+
+```
+1. Write tests based on expected input/output pairs
+2. Confirm tests fail (without implementation code)
+3. Commit tests
+4. Ask Claude to write passing code, iterating until all tests pass
+5. Commit successful code
+```
+
+**Key**: Be explicit about TDD to prevent Claude from creating mock implementations.
+
+#### 3. Visual Iteration
+
+```
+1. Provide screenshot tools (Puppeteer MCP, manual capture)
+2. Provide design mock
+3. Ask Claude to implement, take screenshots, iterate
+4. Commit when satisfied
+```
+
+### Prompting Best Practices
+
+**Be specific** - Specificity significantly improves first-attempt success rates.
+
+| Poor | Good |
+|------|------|
+| "add tests for foo.py" | "write a new test case for foo.py, covering the edge case where the user is logged out. avoid mocks" |
+| "fix the bug" | "fix the null reference exception in UserService.GetById when user doesn't exist" |
+| "improve performance" | "optimize the N+1 query in OrderRepository.GetWithItems using Include" |
+
+### Context Management Strategies
+
+#### CLAUDE.md Optimization
+
+Your `CLAUDE.md` files become part of Claude's prompts and should document:
+- Common bash commands
+- Core files and utility functions
+- Code style guidelines
+- Testing instructions
+- Repository etiquette
+- Developer environment setup
+- Project-specific warnings
+
+**Placement options**:
+- Repo root (primary)
+- Parent directories (monorepos)
+- Child directories (subdirectory-specific)
+- `~/.claude/CLAUDE.md` (global)
+
+#### Context Preservation Techniques
+
+| Technique | How |
+|-----------|-----|
+| **Mention files directly** | Use tab-completion to reference specific files/folders |
+| **Provide images** | Paste screenshots, drag-drop, or provide file paths |
+| **Include URLs** | Paste links for Claude to fetch |
+| **Pass data multiple ways** | Copy-paste, pipe (`cat foo.txt \| claude`), have Claude pull via tools |
+| **Use `/clear` frequently** | Reset context between tasks to prevent degradation |
+
+### Subagent Usage
+
+Use subagents for:
+- **Parallelization**: Multiple subagents handle different tasks simultaneously
+- **Context isolation**: Each operates in its own context window, returning only relevant summaries
+- **Information-heavy tasks**: Where most data proves irrelevant to the main thread
+
+**Best practice**: Tell Claude to use subagents to verify details or investigate particular questions, especially early in a conversation.
+
+### Multi-Claude Workflows
+
+#### Parallel Code Review
+Have one Claude write code; another reviews/tests it. Maintain separate context for better results.
+
+#### Multiple Worktrees
+Run 3-4 Claude sessions on independent tasks simultaneously:
+
+```bash
+# Create worktree
+git worktree add ../project-feature-a feature-a
+
+# Launch Claude in worktree
+cd ../project-feature-a && claude
+
+# Clean up when done
+git worktree remove ../project-feature-a
+```
+
+### Complex Tasks with Checklists
+
+For large tasks with multiple steps, have Claude use a Markdown checklist:
+
+```markdown
+Task Progress:
+- [ ] Step 1: Analyze the form
+- [ ] Step 2: Create field mapping
+- [ ] Step 3: Validate mapping
+- [ ] Step 4: Execute operation
+- [ ] Step 5: Verify output
+```
 
 ---
 
@@ -88,49 +238,18 @@ START: What do you need?
 └─ "Complex multi-step task with specialized persona" → AGENT
 ```
 
-### Detailed Guidelines
+### Detailed Comparison
 
-#### 1. Task Nature (What are you building?)
+#### Skills vs Prompts vs Subagents
 
-| Use Case | Best Tool | Rationale |
-|----------|-----------|-----------|
-| **Autonomous Workflow** | **Agent** | Specialized persona with context isolation |
-| **Reusable Domain Expertise** | **Skill** | Auto-triggered knowledge with resources |
-| **Frequent Atomic Actions** | **Command** | User-controlled shortcuts |
-| **Deterministic Guardrails** | **Hook** | Always-run shell commands |
-| **Persona/Behavior Change** | **Output Style** | System prompt modification |
-| **Background Knowledge** | **CLAUDE.md** | Always-loaded project context |
+| Aspect | Skills | Prompts | Subagents |
+|--------|--------|---------|-----------|
+| **Persistence** | Across conversations | Single conversation | Per-task |
+| **Activation** | Automatic/dynamic | Each explicit request | Delegated |
+| **Context** | Progressive disclosure | In main context | Isolated window |
+| **Best Use** | Repeated procedures | One-off requests | Complex workflows |
 
-#### 2. Invocation Control (Who triggers the action?)
-
-| Mechanism | Trigger | Control Level |
-|-----------|---------|---------------|
-| **Skill** | Model decides based on `description` | Proactive/Automatic |
-| **Agent** | Auto-delegated or "Use the X agent" | Semi-automatic |
-| **Command** | User types `/command` | Explicit/Manual |
-| **Hook** | Lifecycle event (PreToolUse, etc.) | Deterministic |
-| **Output Style** | `/output-style` or settings | User-configured |
-
-#### 3. Complexity and Structure
-
-| Feature | File Structure | Multi-File? | Code Integration |
-|---------|----------------|-------------|------------------|
-| **Agent** | Single `.md` file | No | Full tool access, system prompt |
-| **Skill** | Directory with `SKILL.md` | Yes (scripts, refs, assets) | Scripts for deterministic ops |
-| **Command** | Single `.md` file | No | Bash via `!` prefix |
-| **Hook** | JSON config + scripts | Yes (external scripts) | Shell commands |
-| **Output Style** | Single `.md` file | No | System prompt only |
-
-#### 4. Context Management
-
-| Mechanism | Context Behavior | Efficiency |
-|-----------|------------------|------------|
-| **Skill** | Progressive disclosure (3 levels) | Most efficient |
-| **Agent** | Isolated context window | Prevents pollution |
-| **Command** | Full expansion into main context | Less efficient for large prompts |
-| **Hook** | No context (shell execution) | Zero context cost |
-
-### Common Scenarios
+#### Common Scenarios
 
 | Scenario | Recommended | Why |
 |----------|-------------|-----|
@@ -171,6 +290,17 @@ The most powerful workflows combine mechanisms:
 
 Agents are AI personas with specialized capabilities. Organized **by role** (what they ARE).
 
+### Built-in Subagents
+
+Claude Code includes two built-in subagents:
+
+| Agent | Purpose | Tools | Mode |
+|-------|---------|-------|------|
+| **Plan** | Research and gather information before presenting a plan | Read-only | Plan mode only |
+| **Explore** | Fast, lightweight codebase search and analysis | `ls`, `git status`, `find`, `cat`, `head`, `tail` | Read-only |
+
+**Note**: Subagents cannot spawn other subagents (prevents infinite nesting).
+
 ### Categories
 
 | Folder | Purpose | Examples |
@@ -184,8 +314,8 @@ Agents are AI personas with specialized capabilities. Organized **by role** (wha
 
 ```yaml
 ---
-name: agent-name                    # Required: kebab-case
-description: "Purpose. Use PROACTIVELY when..."  # Required
+name: agent-name                    # Required: kebab-case, lowercase letters/numbers/hyphens
+description: "Purpose. Use PROACTIVELY when..."  # Required: max 1024 chars
 tools: Read, Write, Edit, Bash      # Optional: inherits all if omitted
 model: sonnet                       # Optional: haiku|sonnet|opus|inherit
 permissionMode: default             # Optional: default|acceptEdits|bypassPermissions
@@ -200,6 +330,35 @@ You are a [role description]...
 ## Constraints
 ...
 ```
+
+### Tool Permissions Strategy
+
+**Principle**: Least privilege - only grant necessary tools.
+
+| Agent Type | Recommended Tools | Rationale |
+|------------|-------------------|-----------|
+| **Read-only** (reviewers, auditors) | `Read, Grep, Glob` | Cannot modify code |
+| **Research** | `Read, Grep, Glob, WebFetch, WebSearch` | Information gathering |
+| **Code writers** | `Read, Write, Edit, Bash, Glob, Grep` | Full implementation |
+| **Documentation** | `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` | Content creation |
+
+**Warning**: Omitting the `tools` field grants access to **all available tools** (including MCP). Always whitelist intentionally.
+
+### Permission Modes
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `default` | Standard permission prompts | Normal operation |
+| `acceptEdits` | Auto-accept edit operations | Trusted agents |
+| `bypassPermissions` | Skip all permission checks | Fully automated workflows |
+
+### Model Selection
+
+| Model | Characteristics | Best For |
+|-------|-----------------|----------|
+| `haiku` | Fast, economical | Quick tasks, simple operations |
+| `sonnet` | Balanced | Standard development tasks |
+| `opus` | Powerful reasoning | Complex architectural decisions, security reviews |
 
 ### Decision Tree: Where Does My Agent Go?
 
@@ -218,6 +377,7 @@ Does it have deep domain expertise? → specialists/
 3. **Least privilege** - Only grant necessary tools
 4. **Clear triggers** - Include "Use PROACTIVELY when..." in description
 5. **Lean prompts** - Agent prompts should be <150 lines (see [Agent Separation of Concerns](#agent-separation-of-concerns))
+6. **Third-person descriptions** - Write descriptions in third person for system prompt injection
 
 ---
 
@@ -335,28 +495,6 @@ Before implementation, read:
 [Concise list of rules]
 ```
 
-### Refactoring Workflow
-
-1. **Audit**: Count agent lines (`wc -l agents/**/*.md`)
-2. **Identify**: Find code blocks, templates, commands
-3. **Extract**: Move to skills or commands
-4. **Reference**: Update agent to reference extracted content
-5. **Validate**: Verify agent produces same outputs
-
-### Reference Syntax in Agents
-
-```markdown
-## Implementation Approach
-
-1. Apply `skill-name` skill for:
-   - Pattern 1
-   - Pattern 2
-
-2. Use `/command-name` for atomic tasks
-
-3. Reference `docs/project-context.md` for project-specific values
-```
-
 ### Anti-Patterns
 
 | Anti-Pattern | Problem | Solution |
@@ -418,16 +556,20 @@ Before committing any artifact, verify:
 - [ ] Permissions use `{Project}Permissions.{Feature}.{Action}` pattern
 - [ ] Skills reference `CLAUDE.md` or `docs/` for project context
 
-### Resources
-
-- Full migration guide: `.claude/skills/claude-artifact-creator/references/agent-refactoring-guide.md`
-- Migration analysis: `docs/agent-skill-command-migration.md`
-
 ---
 
 ## Skills (`skills/`)
 
 Skills are knowledge domains with resources. Organized **by topic**.
+
+### Core Principle: Concise is Key
+
+The context window is a shared resource. Challenge each piece of information:
+- "Does Claude really need this explanation?"
+- "Can I assume Claude knows this?"
+- "Does this paragraph justify its token cost?"
+
+**Default assumption**: Claude is already very smart. Only add context Claude doesn't already have.
 
 ### Skill Structure
 
@@ -444,31 +586,141 @@ skills/
 
 ```yaml
 ---
-name: skill-name                    # Required: kebab-case
-description: |                      # Required: trigger mechanism
+name: skill-name                    # Required: max 64 chars, lowercase letters/numbers/hyphens only
+description: |                      # Required: max 1024 chars, no XML tags
   What it does. Use when: (1) scenario, (2) scenario, (3) scenario.
 allowed-tools: Read, Grep, Glob     # Optional: restrict tools
 ---
 
 # Skill Name
 
-## When to Use
-[Triggers and use cases]
+## Quick Start
+[Immediate, actionable content]
 
 ## Core Workflow
 [Step-by-step instructions]
 
-## References
-- [topic.md](references/topic.md)
+## Advanced Features
+**Feature A**: See [FEATURE_A.md](references/feature_a.md)
+**Feature B**: See [FEATURE_B.md](references/feature_b.md)
+```
+
+### Naming Conventions
+
+Use **gerund form** (verb + -ing) for clarity:
+
+| Good (Gerund) | Acceptable | Avoid |
+|---------------|------------|-------|
+| `processing-pdfs` | `pdf-processing` | `helper` |
+| `analyzing-spreadsheets` | `spreadsheet-analysis` | `utils` |
+| `managing-databases` | `database-management` | `tools` |
+| `testing-code` | `code-testing` | `documents` |
+
+### Writing Effective Descriptions
+
+**Always write in third person** - descriptions are injected into system prompts.
+
+| Good | Avoid |
+|------|-------|
+| "Processes Excel files and generates reports" | "I can help you process Excel files" |
+| "Extracts text from PDF documents" | "You can use this to extract text" |
+
+**Be specific and include triggers:**
+
+```yaml
+# Good: Specific with triggers
+description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+
+# Bad: Vague
+description: Helps with documents
 ```
 
 ### Progressive Disclosure
 
 Skills use three-level loading for context efficiency:
 
-1. **Level 1 (Discovery)**: Only `name` + `description` (~50 tokens)
-2. **Level 2 (Instructions)**: Full `SKILL.md` body when triggered
-3. **Level 3 (Resources)**: Scripts/references loaded on-demand
+| Level | What Loads | Token Cost | When |
+|-------|------------|------------|------|
+| **1. Discovery** | `name` + `description` only | ~100 tokens | Startup (all skills) |
+| **2. Instructions** | Full `SKILL.md` body | <5k tokens | When triggered |
+| **3. Resources** | Scripts/references | As needed | On-demand |
+
+### Progressive Disclosure Patterns
+
+#### Pattern 1: High-level guide with references
+
+```markdown
+# PDF Processing
+
+## Quick start
+[Immediate actionable code]
+
+## Advanced features
+**Form filling**: See [FORMS.md](FORMS.md)
+**API reference**: See [REFERENCE.md](REFERENCE.md)
+**Examples**: See [EXAMPLES.md](EXAMPLES.md)
+```
+
+#### Pattern 2: Domain-specific organization
+
+```
+bigquery-skill/
+├── SKILL.md (overview and navigation)
+└── reference/
+    ├── finance.md (revenue, billing metrics)
+    ├── sales.md (opportunities, pipeline)
+    └── product.md (API usage, features)
+```
+
+#### Pattern 3: Conditional details
+
+```markdown
+## Creating documents
+Use docx-js for new documents. See [DOCX-JS.md](DOCX-JS.md).
+
+## Editing documents
+For simple edits, modify the XML directly.
+
+**For tracked changes**: See [REDLINING.md](REDLINING.md)
+```
+
+### Degrees of Freedom
+
+Match specificity to task fragility:
+
+| Freedom Level | When to Use | Example |
+|---------------|-------------|---------|
+| **High** (text instructions) | Multiple valid approaches | "Analyze code structure, check for bugs, suggest improvements" |
+| **Medium** (pseudocode/params) | Preferred pattern exists | Template with customizable parameters |
+| **Low** (exact scripts) | Fragile, error-prone operations | "Run exactly this script: `python migrate.py --verify`" |
+
+### Skill Best Practices
+
+1. **Keep SKILL.md under 500 lines** - Split content into separate files if needed
+2. **Keep references one level deep** - All reference files should link directly from SKILL.md
+3. **Include table of contents** - For reference files longer than 100 lines
+4. **Test with all models** - What works for Opus might need more detail for Haiku
+5. **Avoid time-sensitive information** - Use "old patterns" sections instead of dates
+6. **Use consistent terminology** - Choose one term and use it throughout
+
+### Workflow Pattern for Skills
+
+For complex operations, provide a checklist:
+
+```markdown
+## Document processing workflow
+
+Copy this checklist and track progress:
+
+```
+Task Progress:
+- [ ] Step 1: Analyze input
+- [ ] Step 2: Create mapping
+- [ ] Step 3: Validate
+- [ ] Step 4: Execute
+- [ ] Step 5: Verify output
+```
+```
 
 ### Skill Rules
 
@@ -476,6 +728,7 @@ Skills use three-level loading for context efficiency:
 2. **Topic-focused** - One skill = one knowledge domain
 3. **Concise entry** - SKILL.md under 500 lines
 4. **Specific triggers** - Description lists 3+ trigger scenarios
+5. **Third-person descriptions** - Write in third person for system prompt compatibility
 
 ---
 
@@ -494,6 +747,16 @@ Commands are slash-invokable workflows. Organized **by action** (what user wants
 | `tdd/` | Test-driven development | tdd-cycle, tdd-red |
 | `feature/` | End-to-end feature work | full-stack-feature |
 | `git/` | Version control workflows | git-workflow |
+
+### Command Storage Locations
+
+| Location | Scope | Priority |
+|----------|-------|----------|
+| `.claude/commands/` | Project-specific | Highest |
+| `~/.claude/commands/` | Personal (all projects) | Lower |
+| MCP server prompts | Dynamic | As configured |
+
+Project commands override user commands with identical names.
 
 ### Command File Format
 
@@ -515,6 +778,25 @@ model: sonnet                       # Optional: override model
 2. [Step 2]
 ```
 
+### Using $ARGUMENTS
+
+The `$ARGUMENTS` keyword captures user input after the command name:
+
+```markdown
+---
+description: Analyze and fix GitHub issue
+---
+
+Please analyze and fix the GitHub issue: $ARGUMENTS.
+
+1. Fetch issue details
+2. Understand the problem
+3. Propose solution
+4. Implement fix
+```
+
+**Usage**: `/fix-issue 123` → `$ARGUMENTS` becomes `123`
+
 ### Command vs Skill Decision
 
 | Aspect | Command | Skill |
@@ -534,11 +816,16 @@ Hooks are deterministic shell commands that execute at lifecycle events.
 
 | Event | When | Use Case |
 |-------|------|----------|
-| `PreToolUse` | Before tool call | Block/validate operations |
+| `PreToolUse` | Before tool call | Block/validate operations, custom permissions |
 | `PostToolUse` | After tool call | Auto-format, logging |
+| `PermissionRequest` | When permission dialog shown | Custom approval logic |
 | `Notification` | On notification | Custom alerts |
 | `Stop` | Response complete | Cleanup, summary |
+| `SubagentStop` | Subagent completes | HITL control, next-step prompts |
 | `UserPromptSubmit` | Before processing | Input validation |
+| `SessionStart` | Session begins | Initialization |
+| `SessionEnd` | Session ends | Cleanup |
+| `PreCompact` | Before context compaction | Custom summarization |
 
 ### Hook Configuration
 
@@ -561,6 +848,37 @@ Location: User settings (`~/.claude/settings.json`) or project (`.claude/setting
   }
 }
 ```
+
+### Matcher Syntax
+
+| Pattern | Matches |
+|---------|---------|
+| `Edit` | Exact match |
+| `Edit\|Write` | Either Edit or Write |
+| `*` | All tools |
+| `Task` | Subagent tasks |
+| `WebFetch\|WebSearch` | Web operations |
+
+### PreToolUse Decision Control
+
+PreToolUse hooks can control tool execution:
+
+| Exit Code | Effect |
+|-----------|--------|
+| `0` | Allow tool use |
+| `2` | Block tool use |
+| Other | Ask for permission |
+
+### Hook Use Cases
+
+| Use Case | Event | Example |
+|----------|-------|---------|
+| Auto-format on save | `PostToolUse` | Run prettier after Edit/Write |
+| Block production changes | `PreToolUse` | Exit 2 for production files |
+| Custom notifications | `Notification` | Send to Slack |
+| Logging | `PostToolUse` | Log all commands |
+| Convention feedback | `PostToolUse` | Check code style |
+| HITL workflow | `SubagentStop` | Print next command |
 
 ### Hook Rules
 
@@ -629,15 +947,18 @@ Or simply ask: "Create an agent for [purpose]" or "Create a skill for [domain]" 
 2. Create `agents/{category}/{agent-name}.md`
 3. Include "Use PROACTIVELY when..." in description
 4. Grant only necessary tools
+5. Write description in third person
 
 **Or use:** `python .claude/skills/claude-artifact-creator/scripts/init_agent.py <name> --path .claude/agents`
 
 ### Adding a New Skill
 
 1. Create `skills/{skill-name}/SKILL.md`
-2. Add specific trigger scenarios in description
-3. Add `references/` for detailed docs
-4. Add `scripts/` for deterministic operations
+2. Add specific trigger scenarios in description (3+)
+3. Keep SKILL.md under 500 lines
+4. Add `references/` for detailed docs
+5. Add `scripts/` for deterministic operations
+6. Test with Haiku, Sonnet, and Opus
 
 **Or use:** `python .claude/skills/claude-artifact-creator/scripts/init_skill.py <name> --path .claude/skills`
 
@@ -684,6 +1005,20 @@ When agents grow too large (>150 lines):
 - [ ] Update agent to reference skills and commands
 - [ ] Verify agent produces same outputs
 - [ ] Update agent frontmatter with `skills:` field
+
+### Skill Quality Checklist
+
+Before sharing a skill:
+
+- [ ] Description is specific and includes key terms
+- [ ] Description includes both what the skill does and when to use it
+- [ ] SKILL.md body is under 500 lines
+- [ ] Additional details are in separate files (if needed)
+- [ ] No time-sensitive information
+- [ ] Consistent terminology throughout
+- [ ] Examples are concrete, not abstract
+- [ ] File references are one level deep
+- [ ] Tested with Haiku, Sonnet, and Opus
 
 ---
 
@@ -737,3 +1072,41 @@ api/src/{ProjectName}.Domain/         ← Should be in docs/project-context.md
 2. Use `/run-tests` command           ← References command
 3. Read `docs/project-context.md`     ← References docs
 ```
+
+### Good: Concise Skill Content
+
+```markdown
+## Extract PDF text
+
+Use pdfplumber for text extraction:
+
+```python
+import pdfplumber
+
+with pdfplumber.open("file.pdf") as pdf:
+    text = pdf.pages[0].extract_text()
+```
+```
+
+### Bad: Verbose Skill Content
+
+```markdown
+## Extract PDF text
+
+PDF (Portable Document Format) files are a common file format that contains
+text, images, and other content. To extract text from a PDF, you'll need to
+use a library. There are many libraries available for PDF processing, but we
+recommend pdfplumber because it's easy to use and handles most cases well.
+First, you'll need to install it using pip. Then you can use the code below...
+```
+
+---
+
+## Resources
+
+- **Official Documentation**: [code.claude.com/docs](https://code.claude.com/docs/en/)
+- **Best Practices**: [Anthropic Engineering Blog](https://www.anthropic.com/engineering/claude-code-best-practices)
+- **Agent SDK**: [Building Agents Guide](https://www.anthropic.com/engineering/building-agents-with-the-claude-agent-sdk)
+- **Skills Best Practices**: [Skill Authoring Guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
+- **Full migration guide**: `.claude/skills/claude-artifact-creator/references/agent-refactoring-guide.md`
+- **Migration analysis**: `docs/agent-skill-command-migration.md`

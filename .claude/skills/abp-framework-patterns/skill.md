@@ -895,6 +895,332 @@ public class CrossTenantService : ApplicationService
 }
 ```
 
+### 12. CommonDependencies Pattern
+
+Reduce constructor injection bloat by grouping frequently-used cross-cutting dependencies.
+
+**Define CommonDependencies:**
+```csharp
+// Application.Contracts/Dependencies/CommonDependencies.cs
+public class CommonDependencies<T>
+{
+    public IDistributedEventBus DistributedEventBus { get; set; }
+    public IDataFilter DataFilter { get; set; }
+    public ILogger<T> Logger { get; set; }
+    public IGuidGenerator GuidGenerator { get; set; }
+}
+```
+
+**Register in Module:**
+```csharp
+public override void ConfigureServices(ServiceConfigurationContext context)
+{
+    context.Services.AddTransient(typeof(CommonDependencies<>));
+}
+```
+
+**Usage in AppService:**
+```csharp
+public class PatientAppService : ApplicationService, IPatientAppService
+{
+    private readonly IRepository<Patient, Guid> _patientRepository;
+    private readonly CommonDependencies<PatientAppService> _common;
+
+    public PatientAppService(
+        IRepository<Patient, Guid> patientRepository,
+        CommonDependencies<PatientAppService> common)
+    {
+        _patientRepository = patientRepository;
+        _common = common;
+    }
+
+    public async Task<PatientDto> CreateAsync(CreatePatientDto input)
+    {
+        _common.Logger.LogInformation("Creating patient: {Name}", input.Name);
+
+        var patient = new Patient(_common.GuidGenerator.Create(), input.Name);
+        await _patientRepository.InsertAsync(patient);
+
+        // Publish event
+        await _common.DistributedEventBus.PublishAsync(
+            new PatientCreatedEto { Id = patient.Id, Name = patient.Name });
+
+        return ObjectMapper.Map<Patient, PatientDto>(patient);
+    }
+}
+```
+
+**Benefits:**
+- Reduces constructor parameter count
+- Consistent access to cross-cutting concerns
+- Easy to extend with new shared dependencies
+
+### 13. Filter DTO Pattern
+
+Separate query filters from pagination for type-safe, self-documenting APIs.
+
+**Filter DTO:**
+```csharp
+// Application.Contracts/{EntityPlural}/{Entity}Filter.cs
+public class PatientFilter
+{
+    public Guid? DoctorId { get; set; }
+    public string? Name { get; set; }
+    public string? Email { get; set; }
+    public bool? IsActive { get; set; }
+    public DateTime? CreatedAfter { get; set; }
+    public DateTime? CreatedBefore { get; set; }
+}
+```
+
+**AppService Interface:**
+```csharp
+public interface IPatientAppService : IApplicationService
+{
+    Task<PagedResultDto<PatientDto>> GetListAsync(
+        PagedAndSortedResultRequestDto input,
+        PatientFilter filter);
+}
+```
+
+**AppService Implementation with WhereIf:**
+```csharp
+public async Task<PagedResultDto<PatientDto>> GetListAsync(
+    PagedAndSortedResultRequestDto input,
+    PatientFilter filter)
+{
+    // Trim string inputs
+    filter.Name = filter.Name?.Trim();
+    filter.Email = filter.Email?.Trim();
+
+    // Default sorting
+    if (input.Sorting.IsNullOrWhiteSpace())
+    {
+        input.Sorting = $"{nameof(PatientDto.Name)}";
+    }
+
+    var queryable = await _patientRepository.GetQueryableAsync();
+
+    var query = queryable
+        .WhereIf(filter.DoctorId.HasValue, x => x.DoctorId == filter.DoctorId)
+        .WhereIf(!filter.Name.IsNullOrWhiteSpace(),
+            x => x.Name.ToLower().Contains(filter.Name.ToLower()))
+        .WhereIf(!filter.Email.IsNullOrWhiteSpace(),
+            x => x.Email.ToLower().Contains(filter.Email.ToLower()))
+        .WhereIf(filter.IsActive.HasValue, x => x.IsActive == filter.IsActive)
+        .WhereIf(filter.CreatedAfter.HasValue,
+            x => x.CreationTime >= filter.CreatedAfter.Value)
+        .WhereIf(filter.CreatedBefore.HasValue,
+            x => x.CreationTime <= filter.CreatedBefore.Value);
+
+    var totalCount = await AsyncExecuter.CountAsync(query);
+
+    var patients = await AsyncExecuter.ToListAsync(
+        query
+            .OrderBy(input.Sorting)
+            .PageBy(input.SkipCount, input.MaxResultCount));
+
+    return new PagedResultDto<PatientDto>(
+        totalCount,
+        ObjectMapper.Map<List<Patient>, List<PatientDto>>(patients));
+}
+```
+
+**Controller Binding:**
+```csharp
+[HttpGet]
+public Task<PagedResultDto<PatientDto>> GetListAsync(
+    [FromQuery] PagedAndSortedResultRequestDto input,
+    [FromQuery] PatientFilter filter)
+{
+    return _patientAppService.GetListAsync(input, filter);
+}
+```
+
+### 14. ResponseModel Wrapper Pattern
+
+Wrap API responses with success flag and consistent structure.
+
+**Define ResponseModel:**
+```csharp
+// Application.Contracts/Models/ResponseModel.cs
+public class ResponseModel<T>
+{
+    public bool IsSuccess { get; set; }
+    public T Data { get; set; }
+    public string Message { get; set; }
+
+    public ResponseModel() { }
+
+    public ResponseModel(bool isSuccess, T data, string message = null)
+    {
+        IsSuccess = isSuccess;
+        Data = data;
+        Message = message;
+    }
+
+    public static ResponseModel<T> Success(T data, string message = null)
+        => new(true, data, message);
+
+    public static ResponseModel<T> Failure(string message)
+        => new(false, default, message);
+}
+```
+
+**Usage in AppService:**
+```csharp
+public async Task<ResponseModel<PatientDto>> GetAsync(Guid id)
+{
+    var patient = await _patientRepository.FirstOrDefaultAsync(x => x.Id == id);
+
+    if (patient == null)
+    {
+        return ResponseModel<PatientDto>.Failure("Patient not found");
+    }
+
+    var dto = ObjectMapper.Map<Patient, PatientDto>(patient);
+    return ResponseModel<PatientDto>.Success(dto);
+}
+
+public async Task<ResponseModel<string>> CreateAsync(CreatePatientDto input)
+{
+    try
+    {
+        var patient = new Patient(GuidGenerator.Create(), input.Name);
+        await _patientRepository.InsertAsync(patient);
+
+        return ResponseModel<string>.Success(
+            patient.Id.ToString(),
+            "Patient created successfully");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to create patient");
+        return ResponseModel<string>.Failure(ex.Message);
+    }
+}
+```
+
+### 15. Structured Logging Pattern
+
+Consistent logging format for traceability.
+
+**Standard Logging Template:**
+```csharp
+public async Task<PatientDto> CreateAsync(CreatePatientDto input)
+{
+    _logger.LogInformation(
+        "[{ServiceName}] {MethodName} - Started - Input: {@Input}",
+        nameof(PatientAppService), nameof(CreateAsync), input);
+
+    try
+    {
+        var patient = new Patient(GuidGenerator.Create(), input.Name);
+        await _patientRepository.InsertAsync(patient);
+
+        _logger.LogInformation(
+            "[{ServiceName}] {MethodName} - Completed - PatientId: {PatientId}",
+            nameof(PatientAppService), nameof(CreateAsync), patient.Id);
+
+        return ObjectMapper.Map<Patient, PatientDto>(patient);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(
+            ex,
+            "[{ServiceName}] {MethodName} - Failed - Error: {ErrorMessage}",
+            nameof(PatientAppService), nameof(CreateAsync), ex.Message);
+        throw;
+    }
+}
+```
+
+**Structured Logging Extension:**
+```csharp
+public static class LoggingExtensions
+{
+    public static void LogMethodStart<T>(
+        this ILogger<T> logger,
+        string methodName,
+        object input = null)
+    {
+        logger.LogInformation(
+            "[{ServiceName}] {MethodName} - Started {@Input}",
+            typeof(T).Name, methodName, input);
+    }
+
+    public static void LogMethodEnd<T>(
+        this ILogger<T> logger,
+        string methodName,
+        object result = null)
+    {
+        logger.LogInformation(
+            "[{ServiceName}] {MethodName} - Completed {@Result}",
+            typeof(T).Name, methodName, result);
+    }
+
+    public static void LogMethodError<T>(
+        this ILogger<T> logger,
+        Exception ex,
+        string methodName)
+    {
+        logger.LogError(
+            ex,
+            "[{ServiceName}] {MethodName} - Failed - {ErrorMessage}",
+            typeof(T).Name, methodName, ex.Message);
+    }
+}
+```
+
+### 16. Input Sanitization Pattern
+
+Centralize input trimming and normalization.
+
+**Extension Method:**
+```csharp
+public static class InputSanitizationExtensions
+{
+    public static string TrimAndUpper(this string value)
+        => value?.Trim()?.ToUpperInvariant();
+
+    public static string TrimAndLower(this string value)
+        => value?.Trim()?.ToLowerInvariant();
+
+    public static decimal RoundTo(this decimal value, int decimals = 2)
+        => Math.Round(value, decimals);
+}
+```
+
+**Usage in AppService:**
+```csharp
+public async Task<PatientDto> CreateAsync(CreatePatientDto input)
+{
+    // Sanitize inputs
+    input.Email = input.Email.TrimAndLower();
+    input.Name = input.Name?.Trim();
+    input.Phone = input.Phone?.Trim();
+
+    // Continue with business logic
+}
+```
+
+**Or in Validator:**
+```csharp
+public class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
+{
+    public CreatePatientDtoValidator()
+    {
+        Transform(x => x.Email, v => v.TrimAndLower())
+            .NotEmpty()
+            .EmailAddress();
+
+        Transform(x => x.Name, v => v?.Trim())
+            .NotEmpty()
+            .MaximumLength(100);
+    }
+}
+```
+
 ## Best Practices
 
 1. **Keep Domain Layer Pure**: No dependencies on infrastructure or application concerns
@@ -906,7 +1232,11 @@ public class CrossTenantService : ApplicationService
 7. **Authorization**: Always check permissions in Application Services
 8. **Unit of Work**: Trust ABP's automatic management, override only when needed
 9. **Validation**: Use FluentValidation in DTOs, business rules in Domain
-10. **Logging**: Use ILogger, ABP automatically includes context
+10. **Logging**: Use ILogger with structured logging templates
+11. **CommonDependencies**: Group cross-cutting concerns to reduce constructor bloat
+12. **Filter DTOs**: Separate query filters from pagination for clean APIs
+13. **ResponseModel**: Consider wrapping responses for consistent API contracts
+14. **Input Sanitization**: Centralize trimming and normalization
 
 ## Common Patterns
 

@@ -14,6 +14,35 @@ Orchestrate complete feature development lifecycle with specialized agents at ea
 - Understanding what documents/artifacts each stage produces
 - Running `/add-feature` command
 
+## Execution Modes
+
+| Mode | Command | Time | Best For |
+|------|---------|------|----------|
+| **Minimal** | `--minimal` | ~2 min | Simple CRUD, no docs needed |
+| **Parallel** | `--parallel` | ~5 min | Standard features, balanced speed |
+| **Sequential** | (default) | ~8 min | Complex features needing doc review |
+| **Full Review** | `--full-review` | ~12 min | Production releases |
+
+### Mode Comparison
+
+```
+--minimal:     [Stage 3 only] ────────────────────────────> Done
+--parallel:    [Stage 1 + 2] ─────> [Stage 3 + 4] ────────> Done
+default:       Stage 1 → Stage 2 → Stage 3 → Stage 4 ────> Done
+--full-review: Stage 1 → 2 → 3 → 4 → 5 → 6 ───────────────> Done
+```
+
+## Model Selection by Stage
+
+| Stage | Model | Rationale |
+|-------|-------|-----------|
+| 1. Analysis | `haiku` | Doc generation, no complex reasoning |
+| 2. Design | `haiku` | Template-based, structured output |
+| 3. Implementation | `sonnet` | Code generation needs accuracy |
+| 4. Testing | `haiku` | Test case docs, simple code |
+| 5. Review | `haiku` | Checklist-based analysis |
+| 6. Security | `haiku` | Pattern matching, checklist |
+
 ## Workflow Overview
 
 ```
@@ -21,220 +50,114 @@ Orchestrate complete feature development lifecycle with specialized agents at ea
 │ 1.Analyze & │ → │ 2.Design  │ → │ 3.Implement│ → │ 4.Test    │ → │ 5.Review  │ → │ 6.Security│
 │   Require   │   │ (backend- │   │ (abp-     │   │ (qa-      │   │ (code-    │   │ (security-│
 │ (business-  │   │ architect)│   │ developer)│   │ engineer) │   │ reviewer) │   │ engineer) │
-│  analyst)   │   │           │   │           │   │           │   │           │   │           │
+│  analyst)   │   │  haiku    │   │  sonnet   │   │  haiku    │   │  haiku    │   │  haiku    │
 └─────────────┘   └───────────┘   └───────────┘   └───────────┘   └───────────┘   └───────────┘
       ↓                 ↓               ↓               ↓               ↓               ↓
- • domain/* updates  technical-    Source code    test-cases.md   review-        security-
- • requirements.md   design.md     files          + Test code     report.md      audit.md
- • impact-analysis.md
+   ~100 lines       ~150 lines    Source code      ~80 lines       ~50 lines       ~50 lines
 ```
 
 **Note**: Stages 5-6 are optional (use `--review`, `--security`, or `--full-review` flags).
 
 ## Stage Summary
 
-| Stage | Agent | Input | Output | Skills Used | Optional |
-|-------|-------|-------|--------|-------------|----------|
-| 1. Analyze & Require | `business-analyst` | Raw requirements | `requirements.md`, `impact-analysis.md`, domain updates | `requirements-engineering`, `domain-modeling` | No |
-| 2. Design | `backend-architect` | requirements.md, impact-analysis.md | `technical-design.md` | `api-design-principles`, `postgresql` | No |
-| 3. Implementation | `abp-developer` | technical-design.md | Source code | `abp-framework-patterns` | No |
-| 4. Testing | `qa-engineer` | requirements + design | test-cases.md + tests | `xunit-testing-patterns` | No |
-| 5. Code Review | `code-reviewer` | Source code | `review-report.md` | `code-review-excellence` | Yes |
-| 6. Security | `security-engineer` | All artifacts | `security-audit.md` | `security-patterns` | Yes |
+| Stage | Agent | Model | Max Output | Skills Used |
+|-------|-------|-------|------------|-------------|
+| 1. Analyze | `business-analyst` | haiku | 150 lines | `requirements-engineering`, `domain-modeling` |
+| 2. Design | `backend-architect` | haiku | 200 lines | `api-design-principles`, `efcore-patterns` |
+| 3. Implement | `abp-developer` | sonnet | Code files | `abp-framework-patterns` |
+| 4. Testing | `qa-engineer` | haiku | 80 lines | `xunit-testing-patterns` |
+| 5. Review | `code-reviewer` | haiku | 50 lines | `code-review-excellence` |
+| 6. Security | `security-engineer` | haiku | 50 lines | `security-patterns` |
 
-## Stage Details
+## Concise Output Guidelines
 
-### Stage 1: Analysis & Requirements (business-analyst)
+**CRITICAL**: All documentation stages must be CONCISE. Enforce line limits:
 
-**Purpose**: Analyze requirements, update domain knowledge, and create specifications.
+### Stage 1: requirements.md (max 100 lines)
+```markdown
+# {Feature} Requirements
+## User Stories (3-5 stories)
+## Entity Properties (table)
+## Business Rules (BR-XXX)
+## Permissions (list)
+```
 
-**Agent**: `business-analyst` (merged from domain-manager + product-architect)
+### Stage 2: technical-design.md (max 150 lines)
+```markdown
+# {Feature} Technical Design
+## Entity (class skeleton)
+## DTOs (property lists)
+## AppService Interface
+## API Endpoints (table)
+## Database Columns (table)
+```
 
-**Phases**:
-1. **Domain Analysis**: Review existing entities, rules, permissions
-2. **Domain Updates**: Create/update domain files as needed
-3. **Requirements**: Write user stories with acceptance criteria
-4. **Impact Report**: Document all changes and risks
+### Stage 4: test-cases.md (max 80 lines)
+```markdown
+# {Feature} Test Cases
+| ID | Category | Description | Expected |
+```
 
-**Outputs**:
-- `docs/domain/entities/{entity}.md` (if new entities)
-- `docs/domain/business-rules.md` (new BR-XXX rules appended)
-- `docs/domain/permissions.md` (new permissions appended)
-- `docs/features/{feature}/requirements.md`
-- `docs/features/{feature}/impact-analysis.md`
+## Parallelization Strategy
 
-**Checkpoint**: Domain updated, 3+ user stories, impact analysis complete.
+### Parallel Mode (`--parallel`)
 
-### Stage 2: Technical Design (backend-architect)
+**Phase 1**: Launch simultaneously in ONE message with multiple Task calls:
+- Agent 1: business-analyst (requirements)
+- Agent 2: backend-architect (design)
 
-**Purpose**: Create implementation blueprint from requirements.
+**Phase 2**: After Phase 1 completes, launch simultaneously:
+- Agent 3: abp-developer (implementation)
+- Agent 4: qa-engineer (test cases only, no code)
 
-**Agent Prompt Essentials**:
-- Read requirements.md and impact-analysis.md from Stage 1
-- Reference domain entity definitions
-- Apply `api-design-principles` and `postgresql` skills
-- Output entity design, DTOs, API contracts
-
-**Checkpoint**: Entity, DTOs, and API endpoints defined.
-
-### Stage 3: Implementation (abp-developer)
-
-**Purpose**: Generate production code following technical design.
-
-**Agent Prompt Essentials**:
-- Read technical-design.md from Stage 2
-- Apply `abp-framework-patterns` skill
-- Follow existing code patterns in project
-
-**Checkpoint**: Entity, AppService, DTOs, Validator created. Build succeeds.
-
-### Stage 4: Testing (qa-engineer)
-
-**Purpose**: Create test documentation and implement automated tests.
-
-**Agent Prompt Essentials**:
-- Read requirements.md, technical-design.md, and impact-analysis.md
-- Apply `xunit-testing-patterns` skill
-- Create both documentation and test code
-
-**Checkpoint**: 10+ test cases, test files compile.
-
-### Stage 5: Code Review (Optional)
-
-**Purpose**: Review implemented code for quality and patterns.
-
-**Agent Prompt Essentials**:
-- Read all generated source code
-- Apply `code-review-excellence` skill
-- Check ABP patterns, async usage, validation
-
-**Checkpoint**: No critical issues. Recommendations documented.
-
-### Stage 6: Security Audit (Optional)
-
-**Purpose**: Verify security controls and identify vulnerabilities.
-
-**Agent Prompt Essentials**:
-- Read all artifacts and source code
-- Apply `security-patterns` skill
-- Check OWASP Top 10, authorization, input validation
-
-**Checkpoint**: No critical/high vulnerabilities. Security controls verified.
-
-## Output Locations
-
-All outputs go to `docs/features/{feature-name}/`:
-
-| File | Stage | Content |
-|------|-------|---------|
-| `requirements.md` | 1 | User stories, acceptance criteria, data model |
-| `impact-analysis.md` | 1 | Domain changes, risks, affected components |
-| `technical-design.md` | 2 | Entity, DTOs, API contracts, schema |
-| `test-cases.md` | 4 | Test case table with priorities |
-| `review-report.md` | 5 | Code review findings (optional) |
-| `security-audit.md` | 6 | Security findings (optional) |
-
-Code outputs follow `docs/architecture/README.md` path templates.
+### Why This Works
+- Stage 1 and 2 can work from the same raw requirements
+- Stage 3 and 4 have independent outputs (code vs test docs)
+- Reduces total time from ~15 min to ~5 min
 
 ## Stage Options
 
-| Flag | Stages Executed |
-|------|-----------------|
-| (default) | 1, 2, 3, 4 |
-| `--stage analyze` | 1 only |
-| `--stage design` | 2 only |
-| `--stage implement` | 3 only |
-| `--stage test` | 4 only |
-| `--stage review` | 5 only |
-| `--stage security` | 6 only |
-| `--review` | 1, 2, 3, 4, 5 |
-| `--security` | 1, 2, 3, 4, 6 |
-| `--full-review` | 1, 2, 3, 4, 5, 6 |
+| Flag | Stages | Time |
+|------|--------|------|
+| `--minimal` | 3 only | ~2 min |
+| `--parallel` | 1+2, then 3+4 | ~5 min |
+| (default) | 1→2→3→4 | ~8 min |
+| `--stage analyze` | 1 only | ~1 min |
+| `--stage design` | 2 only | ~1 min |
+| `--stage implement` | 3 only | ~2 min |
+| `--stage test` | 4 only | ~1 min |
+| `--review` | 1→2→3→4→5 | ~10 min |
+| `--security` | 1→2→3→4+6 | ~10 min |
+| `--full-review` | 1→2→3→4→5→6 | ~12 min |
 
-## Impact Analysis Benefits
+## Quick Commands
 
-Stage 1 now produces `impact-analysis.md` which:
-
-- **Audit trail**: Documents what changed and why
-- **Risk visibility**: Flags concerns before implementation
-- **Stakeholder alignment**: Identifies who needs to approve
-- **Test guidance**: Helps QA understand what to test
-- **Security context**: Gives security engineer scope of changes
+| Scenario | Recommended Command |
+|----------|---------------------|
+| Simple CRUD entity | `/generate:crud {Entity} --properties "..."` |
+| Fast feature (no docs) | `/add-feature {name} "{req}" --minimal` |
+| Standard feature | `/add-feature {name} "{req}" --parallel` |
+| Complex feature | `/add-feature {name} "{req}"` |
+| Production release | `/add-feature {name} "{req}" --full-review` |
 
 ## Error Recovery
 
 If a stage fails:
 1. Preserve completed stage outputs
 2. Report which stage failed and why
-3. Allow re-running from failed stage with `--stage` flag
+3. Re-run from failed stage with `--stage` flag
 
 ## Alternative Workflows
 
-Beyond new feature development, use these patterns for other scenarios:
-
-### Bug Fix Workflow
-
-Use `/smart-debug` command which orchestrates:
-
-```
-┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐
-│ 1.Diagnose│ → │ 2.Fix     │ → │ 3.Verify  │ → │ 4.Review  │
-│ (debugger)│   │ (abp-     │   │ (qa-      │   │ (code-    │
-│           │   │ developer)│   │ engineer) │   │ reviewer) │
-└───────────┘   └───────────┘   └───────────┘   └───────────┘
-      ↓               ↓               ↓               ↓
-  Root cause      Code fix      Test verification  Review report
-  analysis
-```
-
-**Invocation**: `/smart-debug "<error-message-or-description>"`
-
-### Standalone Security Audit
-
-Run security audit on existing feature code:
-
-```bash
-/add-feature <existing-feature> --stage security
-```
-
-Uses `security-engineer` agent with `security-patterns` skill to audit existing implementation.
-
-### Domain-Only Update
-
-Update domain knowledge without full feature workflow:
-
-```bash
-/add-feature <feature-name> --stage analyze
-```
-
-Uses `business-analyst` agent to:
-- Analyze requirements against existing domain
-- Update `docs/domain/` files
-- Create impact analysis
-- No implementation triggered
-
-### Code Review Only
-
-Review existing implementation:
-
-```bash
-/add-feature <feature-name> --stage review
-```
-
-Uses `code-reviewer` agent with `code-review-excellence` skill.
-
-## Unified Entry Points
-
 | Scenario | Command |
 |----------|---------|
-| New Feature | `/add-feature <name> "<requirements>"` |
-| Bug Fix | `/smart-debug "<error>"` |
-| Security Audit | `/add-feature <name> --stage security` |
-| Domain Update | `/add-feature <name> --stage analyze` |
-| Code Review | `/add-feature <name> --stage review` |
-| Full Pipeline | `/add-feature <name> "<req>" --full-review` |
+| Simple CRUD | `/generate:crud {Entity}` |
+| Fast Feature | `/add-feature {name} --minimal` |
+| Bug Fix | `/smart-debug "{error}"` |
+| Security Only | `/add-feature {name} --stage security` |
+| Review Only | `/add-feature {name} --stage review` |
 
 ## References
 
-- [references/stage-templates.md](references/stage-templates.md) - Full prompt templates for each stage
+- [references/stage-templates.md](references/stage-templates.md) - Prompt templates
 - [references/checkpoint-validation.md](references/checkpoint-validation.md) - Validation criteria

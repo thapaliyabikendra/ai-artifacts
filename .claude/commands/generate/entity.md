@@ -2,6 +2,7 @@
 description: Scaffold complete ABP entity with all layers (Entity, DTOs, AppService, Validator)
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 argument-hint: <EntityName> [--properties "Name:string,Email:string,DateOfBirth:DateTime"] [--audit full|basic|none]
+model: sonnet
 ---
 
 # Generate Entity Command
@@ -148,6 +149,8 @@ After generation:
 | `--audit none` | AggregateRoot |
 | `--no-validator` | Skip FluentValidation validator |
 | `--no-permissions` | Skip permission scaffolding |
+| `--with-filter` | Generate accompanying Filter DTO for list queries |
+| `--with-response-wrapper` | Use ResponseModel wrapper in AppService methods |
 
 ## Examples
 
@@ -160,4 +163,68 @@ After generation:
 
 # Without soft delete
 /generate:entity AuditLog --audit basic
+
+# With filter DTO for advanced querying
+/generate:entity Product --properties "Name:string,Price:decimal,CategoryId:Guid?" --with-filter
+
+# With response wrapper pattern
+/generate:entity Order --properties "OrderNumber:string,Total:decimal,Status:OrderStatus" --with-response-wrapper
+```
+
+## Filter DTO Generation (--with-filter)
+
+When `--with-filter` is specified, generate an additional filter class:
+
+```csharp
+// Application.Contracts/{EntityPlural}/{Entity}Filter.cs
+public class {Entity}Filter
+{
+    // For each string property: contains search
+    public string? {StringProperty} { get; set; }
+
+    // For each Guid property: exact match
+    public Guid? {GuidProperty} { get; set; }
+
+    // For each bool property: exact match
+    public bool? {BoolProperty} { get; set; }
+
+    // For each DateTime property: range
+    public DateTime? {DateProperty}From { get; set; }
+    public DateTime? {DateProperty}To { get; set; }
+
+    // For each numeric property: range
+    public decimal? {NumericProperty}Min { get; set; }
+    public decimal? {NumericProperty}Max { get; set; }
+
+    // Standard audit filters
+    public DateTime? CreatedAfter { get; set; }
+    public DateTime? CreatedBefore { get; set; }
+}
+```
+
+Update AppService interface:
+```csharp
+Task<PagedResultDto<{Entity}Dto>> GetListAsync(
+    PagedAndSortedResultRequestDto input,
+    {Entity}Filter filter);
+```
+
+Update AppService implementation with WhereIf pattern:
+```csharp
+public async Task<PagedResultDto<{Entity}Dto>> GetListAsync(
+    PagedAndSortedResultRequestDto input,
+    {Entity}Filter filter)
+{
+    var queryable = await _repository.GetQueryableAsync();
+
+    var query = queryable
+        .WhereIf(!filter.Name.IsNullOrWhiteSpace(),
+            x => x.Name.ToLower().Contains(filter.Name.ToLower()))
+        .WhereIf(filter.CategoryId.HasValue,
+            x => x.CategoryId == filter.CategoryId)
+        .WhereIf(filter.CreatedAfter.HasValue,
+            x => x.CreationTime >= filter.CreatedAfter.Value);
+
+    // ... rest of implementation
+}
 ```

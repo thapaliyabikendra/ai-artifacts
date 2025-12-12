@@ -19,162 +19,243 @@ Required files:
 - !`test -d docs/domain && echo "✓ docs/domain/" || echo "✗ MISSING: docs/domain/"`
 - !`test -d docs/architecture && echo "✓ docs/architecture/" || echo "✗ MISSING: docs/architecture/"`
 
+## Mode Selection
+
+Parse arguments to determine execution mode:
+
+| Flag | Mode | Stages | Model | Speed |
+|------|------|--------|-------|-------|
+| `--minimal` | Fast CRUD | 3 only (implement) | sonnet | ~2 min |
+| `--parallel` | Parallel docs | 1+2 parallel, then 3+4 | haiku/sonnet | ~5 min |
+| (default) | Sequential | 1→2→3→4 | haiku/sonnet | ~8 min |
+| `--full-review` | Complete | 1→2→3→4→5→6 | haiku/sonnet/sonnet | ~12 min |
+
 ## Workflow
 
-Apply `feature-development-workflow` skill for stage details.
+```
+--minimal:     Stage 3 only (direct implementation)
+--parallel:    [Stage 1 + Stage 2] → [Stage 3 + Stage 4]
+default:       Stage 1 → Stage 2 → Stage 3 → Stage 4
+--full-review: Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6
+```
+
+---
+
+## Execution: --minimal Mode
+
+For simple CRUD features, skip documentation and use direct scaffolding.
+
+Use Task tool with `subagent_type="abp-developer"` and `model="sonnet"`:
 
 ```
-Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6
-Analyze   Design   Implement  Test      Review    Security
-& Require                               (optional) (optional)
+Implement CRUD feature for {feature-name}.
+
+Requirements: {requirements-text}
+Context: Read docs/architecture/README.md, docs/architecture/patterns.md
+Skills: Apply abp-framework-patterns, efcore-patterns, fluentvalidation-patterns
+
+Generate ALL files in a single pass:
+1. Entity in Domain layer
+2. DTOs in Application.Contracts
+3. AppService interface + implementation
+4. FluentValidation validator
+5. EF Core configuration
+6. Permissions
+
+Build and verify: dotnet build api/*.slnx
 ```
 
-## Execution
+**Output**: List created files. Done.
 
-### Stage 1: Analysis & Requirements (business-analyst)
+---
 
-Use Task tool with `subagent_type="business-analyst"`:
+## Execution: --parallel Mode
+
+Run documentation stages in parallel, then implementation stages in parallel.
+
+### Phase 1: Parallel Documentation (haiku)
+
+Launch BOTH agents simultaneously using multiple Task tool calls in ONE message:
+
+**Agent 1** - Task with `subagent_type="business-analyst"`, `model="haiku"`:
+```
+Analyze requirements for {feature-name}. Be CONCISE.
+
+Input: {requirements-text}
+Output: docs/features/{feature-name}/requirements.md (max 100 lines)
+
+Include ONLY:
+- 3-5 user stories with acceptance criteria
+- Entity properties list
+- Business rules (BR-XXX format)
+- Required permissions
+```
+
+**Agent 2** - Task with `subagent_type="backend-architect"`, `model="haiku"`:
+```
+Create technical design for {feature-name}. Be CONCISE.
+
+Input: {requirements-text}
+Context: Read docs/architecture/patterns.md
+Output: docs/features/{feature-name}/technical-design.md (max 150 lines)
+
+Include ONLY:
+- Entity class skeleton
+- DTO definitions (properties only)
+- AppService interface
+- API endpoints table
+- Database columns table
+```
+
+### Phase 2: Parallel Implementation (sonnet)
+
+After Phase 1 completes, launch BOTH agents simultaneously:
+
+**Agent 3** - Task with `subagent_type="abp-developer"`, `model="sonnet"`:
+```
+Implement {feature-name} feature.
+
+Input: docs/features/{feature-name}/technical-design.md
+Skills: Apply abp-framework-patterns
+Output: Source code files
+
+Build and verify: dotnet build api/*.slnx
+```
+
+**Agent 4** - Task with `subagent_type="qa-engineer"`, `model="haiku"`:
+```
+Create test cases for {feature-name}. Be CONCISE.
+
+Input: docs/features/{feature-name}/requirements.md
+Output: docs/features/{feature-name}/test-cases.md (max 80 lines)
+
+Include ONLY:
+- Test case table (ID, Description, Expected Result)
+- 8-10 test cases covering happy path, validation, authorization
+```
+
+---
+
+## Execution: Default Mode (Sequential)
+
+### Stage 1: Analysis & Requirements
+
+Use Task tool with `subagent_type="business-analyst"`, `model="haiku"`:
 
 ```
-Analyze requirements and update domain for {feature-name}.
+Analyze requirements for {feature-name}. Be CONCISE.
 
 Input: {requirements-text}
 Context: Read docs/domain/*, docs/architecture/README.md
 
-Phase 1 - Domain Analysis:
-- Identify affected entities (new, modified)
-- Check business rule conflicts
-- List required permissions
-
-Phase 2 - Domain Updates:
-- Create/update docs/domain/entities/{entity}.md
-- Add business rules to docs/domain/business-rules.md (BR-XXX format)
-- Add permissions to docs/domain/permissions.md
-- Update role mappings in docs/domain/roles.md
-
-Phase 3 - Requirements:
-- Create docs/features/{feature-name}/requirements.md
-- Include user stories with Given/When/Then acceptance criteria
-
-Phase 4 - Impact Report:
-- Create docs/features/{feature-name}/impact-analysis.md
-- Document all changes, risks, affected components
+Output (max 150 lines total):
+1. docs/domain/entities/{entity}.md - Entity definition
+2. docs/features/{feature-name}/requirements.md - User stories
+3. Update docs/domain/business-rules.md - Add BR-XXX rules
+4. Update docs/domain/permissions.md - Add permissions
 
 Skills: Apply requirements-engineering, domain-modeling patterns
 ```
 
-**Checkpoint**:
-- Domain files updated (if needed)
-- 3+ user stories with acceptance criteria
-- Impact analysis complete
+**Checkpoint**: Requirements doc exists.
 
 ---
 
-### Stage 2: Technical Design (backend-architect)
+### Stage 2: Technical Design
 
-Use Task tool with `subagent_type="backend-architect"`:
+Use Task tool with `subagent_type="backend-architect"`, `model="haiku"`:
 
 ```
-Create technical design for {feature-name}.
+Create technical design for {feature-name}. Be CONCISE.
 
-Input:
-- docs/features/{feature-name}/requirements.md
-- docs/features/{feature-name}/impact-analysis.md
-- docs/domain/entities/
+Input: docs/features/{feature-name}/requirements.md
+Context: Read docs/architecture/patterns.md
+Output: docs/features/{feature-name}/technical-design.md (max 200 lines)
 
-Context: Read docs/architecture/README.md, docs/architecture/patterns.md
+Include:
+- Entity class with properties
+- DTOs (output, input, list input)
+- AppService interface
+- API endpoints table
+- Database schema (columns only)
+
 Skills: Apply api-design-principles, efcore-patterns
-Output: docs/features/{feature-name}/technical-design.md
-
-Include: Entity design, DTOs, AppService interface, permissions, API endpoints, schema.
 ```
 
-**Checkpoint**: Verify entity, DTOs, and API endpoints defined.
+**Checkpoint**: Technical design exists.
 
 ---
 
-### Stage 3: Implementation (abp-developer)
+### Stage 3: Implementation
 
-Use Task tool with `subagent_type="abp-developer"`:
+Use Task tool with `subagent_type="abp-developer"`, `model="sonnet"`:
 
 ```
 Implement {feature-name} feature.
 
 Input: docs/features/{feature-name}/technical-design.md
-Context: Read docs/architecture/README.md, examine existing features
+Context: Read docs/architecture/README.md
 Skills: Apply abp-framework-patterns
-Output: Source code files per technical design
 
 Requirements:
 - Follow project naming conventions
-- All endpoints support pagination
 - All mutations have authorization
 - All inputs have validators
+
+Build: dotnet build api/*.slnx
 ```
 
-**Checkpoint**: Entity, AppService, DTOs created. Build succeeds.
+**Checkpoint**: Build succeeds.
 
 ---
 
-### Stage 4: Testing (qa-engineer)
+### Stage 4: Testing
 
-Use Task tool with `subagent_type="qa-engineer"`:
+Use Task tool with `subagent_type="qa-engineer"`, `model="haiku"`:
 
 ```
-Create tests for {feature-name} feature.
+Create tests for {feature-name}. Be CONCISE.
 
-Input:
-- docs/features/{feature-name}/requirements.md
-- docs/features/{feature-name}/technical-design.md
-
-Context: Read docs/architecture/README.md, examine existing tests
-Skills: Apply xunit-testing-patterns
+Input: docs/features/{feature-name}/requirements.md, technical-design.md
 Output:
-- docs/features/{feature-name}/test-cases.md
-- Test code files
+1. docs/features/{feature-name}/test-cases.md (max 80 lines)
+2. Test class file
 
-Categories: Happy path, Validation, Authorization, Edge cases.
+Include 8-10 test cases: Happy path, Validation, Authorization.
+Skills: Apply xunit-testing-patterns
 ```
 
-**Checkpoint**: 10+ test cases. Tests compile.
+**Checkpoint**: Test cases documented.
 
 ---
 
 ### Stage 5: Code Review (Optional)
 
-Use Task tool with `subagent_type="code-reviewer"`:
+Use Task tool with `subagent_type="code-reviewer"`, `model="haiku"`:
 
 ```
-Review implemented code for {feature-name} feature.
+Review {feature-name} implementation. Be CONCISE.
 
-Input: All source code files from Stage 3
-Context: Read docs/architecture/patterns.md, technical-design.md
-Skills: Apply code-review-excellence patterns
-Output: docs/features/{feature-name}/review-report.md
+Input: Source code files from Stage 3
+Output: docs/features/{feature-name}/review-report.md (max 50 lines)
 
-Checklist: ABP patterns, async usage, validation, authorization, logging.
+Checklist: ABP patterns, async usage, validation, authorization.
 ```
-
-**Checkpoint**: No critical issues. Recommendations documented.
 
 ---
 
 ### Stage 6: Security Audit (Optional)
 
-Use Task tool with `subagent_type="security-engineer"`:
+Use Task tool with `subagent_type="security-engineer"`, `model="haiku"`:
 
 ```
-Perform security audit for {feature-name} feature.
+Security audit for {feature-name}. Be CONCISE.
 
-Input: All artifacts and source code
-Context: Read docs/domain/permissions.md, docs/domain/entities/
-Skills: Apply security-patterns (STRIDE, OWASP Top 10)
-Output: docs/features/{feature-name}/security-audit.md
+Input: All source code
+Output: docs/features/{feature-name}/security-audit.md (max 50 lines)
 
-Checklist: Authorization, input validation, PII protection, error handling.
+Checklist: Authorization, input validation, error handling.
 ```
-
-**Checkpoint**: No critical/high vulnerabilities. Security controls verified.
 
 ---
 
@@ -183,42 +264,32 @@ Checklist: Authorization, input validation, PII protection, error handling.
 ```
 ## Feature: {feature-name}
 
-### Domain Changes
-- Entities: [new/modified count]
-- Business Rules: [new/modified count]
-- Permissions: [new count]
+### Mode: {minimal|parallel|default|full-review}
 
-### Documents
-- docs/features/{feature-name}/requirements.md
-- docs/features/{feature-name}/impact-analysis.md
-- docs/features/{feature-name}/technical-design.md
-- docs/features/{feature-name}/test-cases.md
-- docs/features/{feature-name}/review-report.md (if --review)
-- docs/features/{feature-name}/security-audit.md (if --security)
-
-### Code
-[List created files]
+### Files Created
+[List files]
 
 ### Next Steps
-1. Review impact-analysis.md for stakeholder sign-offs
-2. Run migration (see docs/architecture/README.md)
-3. Build solution
-4. Run tests
+1. Generate migration: /generate:migration Add{Entity}
+2. Apply migration: Run DbMigrator
+3. Run tests: dotnet test api/
 ```
 
 ## Options
 
 | Option | Effect |
 |--------|--------|
-| `--stage analyze` | Stage 1 only (analysis + requirements) |
+| `--minimal` | Implementation only, skip docs (~2 min) |
+| `--parallel` | Parallel doc + impl stages (~5 min) |
+| `--stage analyze` | Stage 1 only |
 | `--stage design` | Stage 2 only |
 | `--stage implement` | Stage 3 only |
 | `--stage test` | Stage 4 only |
 | `--stage review` | Stage 5 only |
 | `--stage security` | Stage 6 only |
-| `--review` | Stages 1-5 (includes code review) |
-| `--security` | Stages 1-4 + 6 (includes security audit) |
-| `--full-review` | Stages 1-6 (all stages) |
+| `--review` | Stages 1-5 |
+| `--security` | Stages 1-4 + 6 |
+| `--full-review` | All stages 1-6 |
 | `--dry-run` | Preview without files |
 
 ## Error Handling
