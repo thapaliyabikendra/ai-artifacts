@@ -1,6 +1,12 @@
 ---
 name: openiddict-authorization
 description: "Master OAuth 2.0 authorization patterns with OpenIddict and ABP Framework including permission-based authorization, role-based access control, custom claims, and multi-tenant security. Use when implementing authentication/authorization for ABP applications."
+layer: 2
+tech_stack: [dotnet, csharp, abp]
+topics: [authentication, authorization, permissions, rbac, claims, oauth2, multi-tenant]
+depends_on: []
+complements: [security-patterns, abp-framework-patterns]
+keywords: [Authorize, Permission, IAuthorizationService, CurrentUser, OpenIddict, JWT, Bearer]
 ---
 
 # OpenIddict Authorization Patterns
@@ -510,6 +516,15 @@ public class PatientAppService : ApplicationService
 - [ ] Multi-tenancy permissions configured correctly
 - [ ] Audit logging enabled for sensitive operations
 - [ ] Token validation configured properly
+
+## Shared Knowledge
+
+For foundational patterns, see the shared knowledge base:
+
+| Topic | File | Description |
+|-------|------|-------------|
+| Permission naming | [knowledge/conventions/permissions.md](../../knowledge/conventions/permissions.md) | Permission format and hierarchy |
+| Naming conventions | [knowledge/conventions/naming.md](../../knowledge/conventions/naming.md) | Permission constant naming |
 
 ## Integration Points
 

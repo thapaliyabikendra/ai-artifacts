@@ -1,6 +1,12 @@
 ---
 name: requirements-engineering
 description: "Transform stakeholder needs into structured, testable specifications with user stories, acceptance criteria, and business rules. Use when: (1) creating requirements documents, (2) writing user stories with acceptance criteria, (3) defining business rules and process flows, (4) analyzing feature requests."
+layer: 2
+tech_stack: [agnostic, markdown]
+topics: [user-stories, acceptance-criteria, business-rules, process-flows, requirements]
+depends_on: []
+complements: [domain-modeling]
+keywords: [UserStory, AcceptanceCriteria, INVEST, Gherkin, Given-When-Then, Requirement]
 ---
 
 # Requirements Engineering

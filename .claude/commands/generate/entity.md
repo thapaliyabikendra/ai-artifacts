@@ -1,7 +1,7 @@
 ---
 description: Scaffold complete ABP entity with all layers (Entity, DTOs, AppService, Validator)
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
-argument-hint: <EntityName> [--properties "Name:string,Email:string,DateOfBirth:DateTime"] [--audit full|basic|none]
+argument-hint: <EntityName> [--properties "Name:string,Email:string"] [--fast] [--audit full|basic|none]
 model: sonnet
 ---
 
@@ -20,7 +20,14 @@ Scaffold a complete ABP Framework entity with all layers.
 Required context:
 - Read `CLAUDE.md` for project conventions
 - Read `docs/architecture/README.md` for project paths
-- Read `docs/domain/entities/` for existing entity patterns
+
+## Mode Selection
+
+| Mode | Stages | Speed | Use When |
+|------|--------|-------|----------|
+| (default) | Full scaffolding with docs | ~3 min | Complete feature setup |
+| `--fast` | Code only, no docs | ~2 min | Quick CRUD, prototyping |
+| `--minimal` | Entity + DTO only | ~1 min | Minimal scaffolding |
 
 ## Workflow
 
@@ -39,104 +46,46 @@ Use Task tool with `subagent_type="abp-developer"`:
 Generate complete ABP entity scaffolding for: {EntityName}
 
 Properties: {properties or prompt for them}
-Audit: {audit-level: full|basic|none}
+Audit: {audit-level: full|basic|none, default: full}
+Mode: {default|fast|minimal}
 
-Skills: Apply abp-framework-patterns, efcore-patterns, fluentvalidation-patterns
-
-## 1. Domain Layer: Entity
-
-Create: api/src/{Project}.Domain/{EntityPlural}/{Entity}.cs
-
-```csharp
-public class {Entity} : FullAuditedAggregateRoot<Guid>
-{
-    // Properties with private setters
-    public string Name { get; private set; }
-
-    // Private constructor for EF Core
-    private {Entity}() { }
-
-    // Public constructor with validation
-    public {Entity}(Guid id, string name) : base(id)
-    {
-        SetName(name);
-    }
-
-    // Encapsulated setters
-    public void SetName(string name)
-    {
-        Name = Check.NotNullOrWhiteSpace(name, nameof(name), maxLength: 100);
-    }
-}
-```
-
-## 2. Application.Contracts: DTOs + Interface
-
-Create: api/src/{Project}.Application.Contracts/{EntityPlural}/
-
-- {Entity}Dto.cs
-- CreateUpdate{Entity}Dto.cs
-- Get{Entity}ListInput.cs
-- I{Entity}AppService.cs
-
-## 3. Application: AppService + Validator
-
-Create: api/src/{Project}.Application/{EntityPlural}/
-
-- {Entity}AppService.cs (with CRUD + authorization)
-- CreateUpdate{Entity}DtoValidator.cs (FluentValidation)
-
-## 4. EntityFrameworkCore: DbContext
-
-Edit: api/src/{Project}.EntityFrameworkCore/.../DbContext.cs
-- Add DbSet<{Entity}> {EntityPlural}
-
-Edit: OnModelCreating
-- Add entity configuration
-
-## 5. Permissions
-
-Edit: api/src/{Project}.Application.Contracts/Permissions/
-- Add {Entity} permission constants
-- Register in PermissionDefinitionProvider
+Skills: Apply abp-framework-patterns, abp-entity-patterns, abp-service-patterns, efcore-patterns, fluentvalidation-patterns
 
 ## Output Files
 
-```
-api/src/
-├── {Project}.Domain/{EntityPlural}/
-│   └── {Entity}.cs
-├── {Project}.Application.Contracts/{EntityPlural}/
-│   ├── {Entity}Dto.cs
-│   ├── CreateUpdate{Entity}Dto.cs
-│   ├── Get{Entity}ListInput.cs
-│   └── I{Entity}AppService.cs
-├── {Project}.Application/{EntityPlural}/
-│   ├── {Entity}AppService.cs
-│   └── CreateUpdate{Entity}DtoValidator.cs
-└── {Project}.EntityFrameworkCore/
-    └── (DbContext updated)
-```
-```
+### 1. Domain Layer: Entity
+api/src/{Project}.Domain/{EntityPlural}/{Entity}.cs
+- Inherit FullAuditedAggregateRoot<Guid>
+- Private setters with SetXxx() methods
+- Private parameterless constructor
+- Validation in setters using Check.NotNullOrWhiteSpace
 
-## Checkpoint
+### 2. Application.Contracts: DTOs + Interface
+api/src/{Project}.Application.Contracts/{EntityPlural}/
+- {Entity}Dto.cs
+- CreateUpdate{Entity}Dto.cs
+- Get{Entity}ListInput.cs (extends PagedAndSortedResultRequestDto)
+- I{Entity}AppService.cs
 
-After generation:
-- [ ] Entity created with proper encapsulation
-- [ ] DTOs created with validation attributes
-- [ ] AppService implements CRUD with authorization
-- [ ] Validator uses FluentValidation
-- [ ] DbSet added to DbContext
-- [ ] Permissions defined
-- [ ] Build succeeds: `dotnet build api/*.slnx`
+### 3. Application: AppService + Validator
+api/src/{Project}.Application/{EntityPlural}/
+- {Entity}AppService.cs (CRUD with [Authorize] attributes)
+- CreateUpdate{Entity}DtoValidator.cs (FluentValidation)
 
-## Next Steps
+### 4. EntityFrameworkCore: Configuration
+api/src/{Project}.EntityFrameworkCore/{EntityPlural}/
+- {Entity}Configuration.cs (IEntityTypeConfiguration)
+- Add DbSet<{Entity}> to DbContext
 
-```
-1. Run: /generate:migration Add{Entity}
-2. Review migration
-3. Apply: Run DbMigrator
-4. Test: dotnet test api/test/*.Application.Tests
+### 5. Permissions (edit existing)
+- Add constants to {Project}Permissions.cs
+- Register in PermissionDefinitionProvider.cs
+
+### 6. Mapperly (edit existing)
+- Add mapping methods to ApplicationMappers.cs
+
+## Build Verification
+Run: dotnet build api/*.slnx
 ```
 
 ## Options
@@ -144,87 +93,84 @@ After generation:
 | Option | Effect |
 |--------|--------|
 | `--properties` | Property definitions (Name:type format) |
+| `--fast` | Skip documentation, code only (~2 min) |
+| `--minimal` | Entity + DTO only, no service |
 | `--audit full` | FullAuditedAggregateRoot (default) |
 | `--audit basic` | AuditedAggregateRoot |
 | `--audit none` | AggregateRoot |
+| `--with-filter` | Generate separate Filter DTO |
+| `--with-response-wrapper` | Use ResponseModel wrapper |
 | `--no-validator` | Skip FluentValidation validator |
 | `--no-permissions` | Skip permission scaffolding |
-| `--with-filter` | Generate accompanying Filter DTO for list queries |
-| `--with-response-wrapper` | Use ResponseModel wrapper in AppService methods |
+
+## Property Type Reference
+
+| Type | C# Type | Example |
+|------|---------|---------|
+| `string` | `string` | `Name:string` |
+| `int` | `int` | `Quantity:int` |
+| `decimal` | `decimal` | `Price:decimal` |
+| `bool` | `bool` | `IsActive:bool` |
+| `DateTime` | `DateTime` | `DueDate:DateTime` |
+| `Guid` | `Guid` | `CategoryId:Guid` |
+| `Guid?` | `Guid?` | `ParentId:Guid?` |
+| `{EnumName}` | enum | `Status:OrderStatus` |
 
 ## Examples
 
 ```bash
-# Basic entity
-/generate:entity Product
+# Basic entity (full mode)
+/generate:entity Product --properties "Name:string,Price:decimal,Stock:int"
 
-# With properties
-/generate:entity Product --properties "Name:string,Price:decimal,Stock:int,IsActive:bool"
+# Fast CRUD (no docs)
+/generate:entity Invoice --properties "Number:string,Amount:decimal" --fast
+
+# With filter DTO for advanced querying
+/generate:entity Patient --properties "Name:string,Status:PatientStatus" --with-filter
 
 # Without soft delete
 /generate:entity AuditLog --audit basic
 
-# With filter DTO for advanced querying
-/generate:entity Product --properties "Name:string,Price:decimal,CategoryId:Guid?" --with-filter
-
-# With response wrapper pattern
-/generate:entity Order --properties "OrderNumber:string,Total:decimal,Status:OrderStatus" --with-response-wrapper
+# Minimal scaffolding
+/generate:entity Category --properties "Name:string" --minimal
 ```
 
-## Filter DTO Generation (--with-filter)
+## Output Summary
 
-When `--with-filter` is specified, generate an additional filter class:
+```
+## Entity Generated: {EntityName}
 
-```csharp
-// Application.Contracts/{EntityPlural}/{Entity}Filter.cs
-public class {Entity}Filter
-{
-    // For each string property: contains search
-    public string? {StringProperty} { get; set; }
+### Files Created
+- api/src/{Project}.Domain/{EntityPlural}/{Entity}.cs
+- api/src/{Project}.Application.Contracts/{EntityPlural}/{Entity}Dto.cs
+- api/src/{Project}.Application.Contracts/{EntityPlural}/CreateUpdate{Entity}Dto.cs
+- api/src/{Project}.Application.Contracts/{EntityPlural}/I{Entity}AppService.cs
+- api/src/{Project}.Application/{EntityPlural}/{Entity}AppService.cs
+- api/src/{Project}.Application/{EntityPlural}/CreateUpdate{Entity}DtoValidator.cs
+- api/src/{Project}.EntityFrameworkCore/{EntityPlural}/{Entity}Configuration.cs
 
-    // For each Guid property: exact match
-    public Guid? {GuidProperty} { get; set; }
+### Files Modified
+- Permissions, PermissionDefinitionProvider, DbContext, ApplicationMappers
 
-    // For each bool property: exact match
-    public bool? {BoolProperty} { get; set; }
+### API Endpoints (auto-generated)
+- GET    /api/app/{entity}
+- GET    /api/app/{entity}/{id}
+- POST   /api/app/{entity}
+- PUT    /api/app/{entity}/{id}
+- DELETE /api/app/{entity}/{id}
 
-    // For each DateTime property: range
-    public DateTime? {DateProperty}From { get; set; }
-    public DateTime? {DateProperty}To { get; set; }
-
-    // For each numeric property: range
-    public decimal? {NumericProperty}Min { get; set; }
-    public decimal? {NumericProperty}Max { get; set; }
-
-    // Standard audit filters
-    public DateTime? CreatedAfter { get; set; }
-    public DateTime? CreatedBefore { get; set; }
-}
+### Next Steps
+1. /generate:migration Add{Entity}
+2. dotnet run --project api/src/{Project}.DbMigrator
+3. Test API via Swagger
 ```
 
-Update AppService interface:
-```csharp
-Task<PagedResultDto<{Entity}Dto>> GetListAsync(
-    PagedAndSortedResultRequestDto input,
-    {Entity}Filter filter);
-```
+## Checkpoint
 
-Update AppService implementation with WhereIf pattern:
-```csharp
-public async Task<PagedResultDto<{Entity}Dto>> GetListAsync(
-    PagedAndSortedResultRequestDto input,
-    {Entity}Filter filter)
-{
-    var queryable = await _repository.GetQueryableAsync();
-
-    var query = queryable
-        .WhereIf(!filter.Name.IsNullOrWhiteSpace(),
-            x => x.Name.ToLower().Contains(filter.Name.ToLower()))
-        .WhereIf(filter.CategoryId.HasValue,
-            x => x.CategoryId == filter.CategoryId)
-        .WhereIf(filter.CreatedAfter.HasValue,
-            x => x.CreationTime >= filter.CreatedAfter.Value);
-
-    // ... rest of implementation
-}
-```
+- [ ] Entity created with proper encapsulation
+- [ ] DTOs created
+- [ ] AppService implements CRUD with authorization
+- [ ] Validator uses FluentValidation
+- [ ] DbSet added to DbContext
+- [ ] Permissions defined
+- [ ] Build succeeds

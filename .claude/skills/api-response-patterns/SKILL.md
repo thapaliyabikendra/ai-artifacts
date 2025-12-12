@@ -1,6 +1,12 @@
 ---
 name: api-response-patterns
 description: "API response wrapper patterns for consistent, predictable REST APIs in ABP Framework. Use when: (1) designing uniform API response contracts, (2) implementing success/error response wrappers, (3) handling pagination and metadata, (4) standardizing error responses."
+layer: 2
+tech_stack: [dotnet, csharp, abp]
+topics: [response-wrapper, error-response, pagination, metadata, http-status]
+depends_on: [api-design-principles]
+complements: [abp-framework-patterns]
+keywords: [ApiResponse, PagedResultDto, ErrorResponse, StatusCode, ValidationError]
 ---
 
 # API Response Patterns

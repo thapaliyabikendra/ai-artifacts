@@ -1,6 +1,12 @@
 ---
 name: grpc-integration-patterns
 description: "gRPC integration patterns for ABP microservices including service implementation, client generation, multi-tenancy, and error handling. Use when: (1) implementing inter-service communication, (2) creating gRPC service endpoints, (3) consuming gRPC clients in AppServices, (4) designing high-performance APIs."
+layer: 3
+tech_stack: [dotnet, csharp, abp, grpc]
+topics: [grpc, protobuf, service-communication, streaming, interceptors]
+depends_on: [abp-framework-patterns]
+complements: []
+keywords: [gRPC, Protobuf, proto, GrpcChannel, ServerServiceDefinition, Interceptor]
 ---
 
 # gRPC Integration Patterns

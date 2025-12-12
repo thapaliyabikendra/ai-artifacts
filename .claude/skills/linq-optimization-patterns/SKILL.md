@@ -1,6 +1,12 @@
 ---
 name: linq-optimization-patterns
 description: "Master LINQ and EF Core query optimization including N+1 prevention, eager loading, projections, and performance patterns. Use when: (1) fixing N+1 queries, (2) optimizing slow queries, (3) implementing efficient data access, (4) reducing database load."
+layer: 2
+tech_stack: [dotnet, csharp, efcore]
+topics: [query-optimization, n-plus-one, eager-loading, projections, performance]
+depends_on: []
+complements: [efcore-patterns]
+keywords: [Include, ThenInclude, Select, AsNoTracking, AsSplitQuery, WhereIf, N+1]
 ---
 
 # LINQ Optimization Patterns

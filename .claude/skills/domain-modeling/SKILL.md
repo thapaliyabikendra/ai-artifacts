@@ -1,6 +1,12 @@
 ---
 name: domain-modeling
 description: "Model business domains with entities, relationships, business rules, and permissions. Use when: (1) creating entity definitions, (2) defining business rules (BR-XXX), (3) designing permission structures, (4) analyzing domain impact, (5) maintaining domain documentation."
+layer: 2
+tech_stack: [agnostic, markdown]
+topics: [entity-design, business-rules, relationships, permissions, aggregates, value-objects]
+depends_on: []
+complements: [requirements-engineering]
+keywords: [Entity, Aggregate, ValueObject, BusinessRule, BR-, Relationship, Domain]
 ---
 
 # Domain Modeling

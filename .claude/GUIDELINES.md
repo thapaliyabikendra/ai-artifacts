@@ -1,5 +1,7 @@
 # Claude Code Organization Guidelines
 
+> **Meta-Knowledge Source**: This document is the authoritative reference for creating and organizing Claude Code artifacts (agents, skills, commands, hooks). The `claude-artifact-creator` skill reads this file before creating any artifact.
+
 This document defines the structure, conventions, and decision framework for organizing agents, commands, skills, and other Claude Code extensibility mechanisms in this repository.
 
 > **Sources**: This guide incorporates best practices from:
@@ -12,15 +14,16 @@ This document defines the structure, conventions, and decision framework for org
 
 1. [Agentic Coding Best Practices](#agentic-coding-best-practices)
 2. [Directory Structure](#directory-structure-overview)
-3. [Choosing the Right Tool](#choosing-the-right-tool)
-4. [Agents](#agents-agents)
-5. [Agent Separation of Concerns](#agent-separation-of-concerns)
-6. [Artifact Portability Rules](#artifact-portability-rules)
-7. [Skills](#skills-skills)
-8. [Commands](#commands-commands)
-9. [Hooks](#hooks)
-10. [Output Styles](#output-styles)
-11. [Quick Reference](#quick-reference)
+3. [Knowledge Architecture](#knowledge-architecture)
+4. [Choosing the Right Tool](#choosing-the-right-tool)
+5. [Agents](#agents-agents)
+6. [Agent Separation of Concerns](#agent-separation-of-concerns)
+7. [Artifact Portability Rules](#artifact-portability-rules)
+8. [Skills](#skills-skills)
+9. [Commands](#commands-commands)
+10. [Hooks](#hooks)
+11. [Output Styles](#output-styles)
+12. [Quick Reference](#quick-reference)
 
 ---
 
@@ -194,6 +197,147 @@ Task Progress:
 
 ---
 
+## Knowledge Architecture
+
+A Context7-inspired system for knowledge discovery and sharing between skills.
+
+### Tiered Discovery (Efficiency Optimization)
+
+Select the appropriate tier based on task complexity:
+
+| Tier | Task Complexity | Files Read | Time |
+|------|-----------------|------------|------|
+| **SKIP** | Simple (typo, comment, single-line edit) | 0 | ~0s |
+| **QUICK** | Single-skill (write tests, add validation) | 0 (use CLAUDE.md ref) | ~2s |
+| **STANDARD** | Multi-skill (API design, debug complex error) | 2 (INDEX + GRAPH) | ~10s |
+| **DEEP** | Full implementation (CRUD, new feature) | 4+ (full protocol) | ~15-20s |
+
+**Tier Selection Flowchart:**
+
+```
+START: What's the task?
+│
+├─ Single file, obvious change? → SKIP
+│
+├─ One pattern/skill needed? → QUICK (use CLAUDE.md inline reference)
+│
+├─ Multiple skills or unfamiliar? → STANDARD (read SKILL-INDEX + CONTEXT-GRAPH)
+│
+└─ Full feature/CRUD workflow? → DEEP (full 4-step protocol)
+```
+
+**Key Principle**: Don't over-discover. A typo fix doesn't need knowledge discovery.
+
+### Core Components
+
+```
+.claude/
+├── SKILL-INDEX.md          # Discovery index (like resolve-library-id)
+├── CONTEXT-GRAPH.md        # Skill relationships and dependencies
+├── knowledge/              # Shared knowledge base
+│   ├── INDEX.md
+│   ├── entities/           # Entity patterns (base classes, audit, soft-delete)
+│   ├── patterns/           # Design patterns (repository, UoW, specification)
+│   ├── conventions/        # Naming, structure, permissions
+│   └── examples/           # Complete examples (crud-entity, validation-chain)
+└── flows/                  # Multi-skill workflows
+    ├── INDEX.md
+    └── crud-implementation.md
+```
+
+### Discovery Protocols by Tier
+
+**SKIP**: No action needed.
+
+**QUICK**: Use the inline reference in `CLAUDE.md` (Quick Skill Reference section).
+
+**STANDARD**:
+```
+1. DISCOVER  →  Check SKILL-INDEX.md for relevant skills
+2. RELATE    →  Check CONTEXT-GRAPH.md for dependencies
+```
+
+**DEEP**:
+```
+1. DISCOVER  →  Check SKILL-INDEX.md for relevant skills by task/keyword/error
+2. RELATE    →  Check CONTEXT-GRAPH.md for skill dependencies and complements
+3. REFERENCE →  Read /knowledge/ files for shared patterns and conventions
+4. FOLLOW    →  Use /flows/ for multi-step workflows
+```
+
+### Skill Layers
+
+Skills are organized in four layers (defined in `CONTEXT-GRAPH.md`):
+
+| Layer | Purpose | Examples | Load Order |
+|-------|---------|----------|------------|
+| **1 - Foundation** | Language basics | csharp-advanced, dotnet-async, git-advanced | First |
+| **2 - Framework** | ABP, EF Core | abp-framework-patterns, efcore-patterns | Second |
+| **3 - Features** | Testing, security | xunit-testing, security-patterns | Third |
+| **4 - Workflows** | Orchestration | feature-development-workflow | As needed |
+
+**Rule**: Always load Layer 1-2 dependencies before using Layer 3-4 skills.
+
+### Enhanced Skill Metadata
+
+All skills include frontmatter with relationship metadata:
+
+```yaml
+---
+name: skill-name
+description: "..."
+layer: 2                                    # 1-4
+topics: [entity, dto, repository]           # Searchable topics
+depends_on: [csharp-advanced-patterns]      # Required skills (load first)
+complements: [efcore-patterns]              # Related skills (optional)
+keywords: [Entity, AppService, DTO]         # Code keywords for discovery
+---
+```
+
+### Shared Knowledge Base (`/knowledge/`)
+
+Extract common concepts referenced by multiple skills:
+
+| Directory | Purpose | Used By |
+|-----------|---------|---------|
+| `entities/` | ABP entity patterns | abp-framework-patterns, efcore-patterns |
+| `patterns/` | Repository, UoW, Specification | abp-framework-patterns |
+| `conventions/` | Naming, structure, permissions | All backend skills |
+| `examples/` | Complete implementation examples | All skills |
+
+### Flow Definitions (`/flows/`)
+
+Multi-skill workflows for complex tasks:
+
+```markdown
+# Flow: CRUD Implementation
+
+## Steps
+1. Domain Modeling → Apply `domain-modeling` skill
+2. Entity → Apply `abp-framework-patterns` + read `knowledge/entities/`
+3. Validation → Apply `fluentvalidation-patterns`
+4. Permissions → Apply `openiddict-authorization`
+5. Tests → Apply `xunit-testing-patterns`
+```
+
+### When to Use Each Component
+
+| Need | Check |
+|------|-------|
+| Find skill for task | `SKILL-INDEX.md` |
+| Find related skills | `CONTEXT-GRAPH.md` |
+| ABP entity patterns | `knowledge/entities/` |
+| Implementation workflow | `flows/crud-implementation.md` |
+
+### Maintenance Rules
+
+1. **SKILL-INDEX.md** - Update when adding new skills
+2. **CONTEXT-GRAPH.md** - Update when changing skill dependencies
+3. **knowledge/** - Extract when pattern appears in 2+ skills
+4. **flows/** - Create for tasks requiring 3+ skills in sequence
+
+---
+
 ## Choosing the Right Tool
 
 Claude Code provides multiple extensibility mechanisms. Choosing the right one depends on **four key factors**:
@@ -343,6 +487,31 @@ You are a [role description]...
 | **Documentation** | `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` | Content creation |
 
 **Warning**: Omitting the `tools` field grants access to **all available tools** (including MCP). Always whitelist intentionally.
+
+### Tool Usage Best Practices
+
+**Principle**: Minimize context usage through targeted operations.
+
+| Tool | When to Use | Preferred Over |
+|------|-------------|----------------|
+| **Grep** | Search for specific patterns before reading files | Reading entire files to find content |
+| **Glob** | Find files by pattern | Scanning directories with `ls` or `find` |
+| **Edit** | Make targeted changes to specific sections | Rewriting whole files with Write |
+| **Read** | Need full file context or structure | Default when only searching for content |
+
+**Efficiency Guidelines:**
+
+1. **Search before read** - Use `Grep` to locate relevant content, then `Read` only necessary sections
+2. **Pattern match first** - Use `Glob` to find files before exploring directories
+3. **Targeted edits** - Use `Edit` for surgical changes; reserve `Write` for new files or complete rewrites
+4. **Parallel operations** - Execute independent searches/reads in parallel to reduce round trips
+5. **Limit scope** - Use `offset` and `limit` parameters when reading large files
+
+**Anti-patterns to avoid:**
+- Reading entire files just to find one function
+- Using `Write` to change a single line
+- Sequential file reads that could be parallelized
+- Broad directory scans instead of targeted glob patterns
 
 ### Permission Modes
 
@@ -589,6 +758,7 @@ skills/
 name: skill-name                    # Required: max 64 chars, lowercase letters/numbers/hyphens only
 description: |                      # Required: max 1024 chars, no XML tags
   What it does. Use when: (1) scenario, (2) scenario, (3) scenario.
+tech_stack: [dotnet, csharp, abp]   # Required: allowed code languages/frameworks
 allowed-tools: Read, Grep, Glob     # Optional: restrict tools
 ---
 
@@ -634,6 +804,35 @@ description: Extract text and tables from PDF files, fill forms, merge documents
 # Bad: Vague
 description: Helps with documents
 ```
+
+### Tech Stack Enforcement
+
+The `tech_stack` field declares which languages/frameworks a skill uses for code examples. This enables automated auditing to prevent wrong tech stack in skills.
+
+**Valid tech_stack values:**
+
+| Category | Values |
+|----------|--------|
+| **Backend** | `dotnet`, `csharp`, `abp`, `efcore`, `grpc` |
+| **Frontend** | `typescript`, `react`, `javascript` |
+| **Testing** | `xunit`, `playwright`, `jest`, `vitest` |
+| **Infrastructure** | `docker`, `postgresql`, `redis`, `git`, `bash` |
+| **Design** | `agnostic`, `markdown`, `mermaid`, `yaml` |
+
+**Example by category:**
+
+```yaml
+# Backend skill
+tech_stack: [dotnet, csharp, abp]
+
+# Frontend skill
+tech_stack: [typescript, react]
+
+# Design/documentation skill (language-agnostic)
+tech_stack: [agnostic, markdown]
+```
+
+**Audit command**: Run `/review:tech-stack-audit` to scan all skills for code examples that don't match declared tech_stack.
 
 ### Progressive Disclosure
 

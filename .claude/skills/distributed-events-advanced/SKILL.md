@@ -1,6 +1,12 @@
 ---
 name: distributed-events-advanced
 description: "Advanced distributed event patterns for ABP microservices including idempotent handlers, cross-tenant events, event sourcing lite, and saga patterns. Use when: (1) implementing event handlers across services, (2) ensuring idempotent event processing, (3) cross-tenant event handling, (4) designing event-driven architectures."
+layer: 3
+tech_stack: [dotnet, csharp, abp]
+topics: [distributed-events, event-handlers, idempotency, saga, event-sourcing, multi-tenant]
+depends_on: [abp-framework-patterns]
+complements: []
+keywords: [IDistributedEventHandler, Eto, EventBus, Saga, Idempotent, Outbox, RabbitMQ]
 ---
 
 # Distributed Events Advanced Patterns

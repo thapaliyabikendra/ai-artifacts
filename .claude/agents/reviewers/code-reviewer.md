@@ -3,7 +3,7 @@ name: code-reviewer
 description: "Code reviewer for .NET and React applications. Reviews PRs for quality, patterns, and best practices. Use PROACTIVELY when reviewing pull requests, checking code quality, or ensuring coding standards."
 model: sonnet
 tools: Read, Glob, Grep
-skills: code-review-excellence, abp-framework-patterns, typescript-advanced-types, csharp-advanced-patterns
+skills: code-review-excellence, clean-code-dotnet, abp-framework-patterns, typescript-advanced-types, csharp-advanced-patterns
 ---
 
 # Code Reviewer

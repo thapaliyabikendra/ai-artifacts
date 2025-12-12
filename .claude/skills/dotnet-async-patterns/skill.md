@@ -1,6 +1,12 @@
 ---
 name: dotnet-async-patterns
-description: Master .NET async/await patterns including Task-based Asynchronous Pattern (TAP), ValueTask optimization, ConfigureAwait usage, cancellation tokens, parallel processing, and avoiding deadlocks in ASP.NET Core applications for maximum performance and responsiveness.
+description: "Master .NET async/await patterns including Task-based Asynchronous Pattern (TAP), ValueTask optimization, ConfigureAwait usage, cancellation tokens, parallel processing, and avoiding deadlocks in ASP.NET Core applications for maximum performance and responsiveness."
+layer: 1
+tech_stack: [dotnet, csharp]
+topics: [async-await, task, valuetask, cancellation, parallel, deadlock-prevention]
+depends_on: []
+complements: [error-handling-patterns, csharp-advanced-patterns]
+keywords: [async, await, Task, ValueTask, CancellationToken, ConfigureAwait, WhenAll, Parallel]
 ---
 
 # .NET Async/Await Patterns

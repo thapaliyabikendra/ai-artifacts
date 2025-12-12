@@ -1,11 +1,28 @@
 ---
 name: claude-artifact-creator
-description: Creates, improves, and validates Claude Code artifacts (skills, agents, commands, hooks). Use when creating domain expertise skills, specialized task agents, user-invoked commands, extending Claude Code capabilities, improving existing artifacts, reviewing artifact quality, analyzing code for automation opportunities, or consolidating duplicate artifacts.
+description: "Creates, improves, and validates Claude Code artifacts (skills, agents, commands, hooks). Use when creating domain expertise skills, specialized task agents, user-invoked commands, extending Claude Code capabilities, improving existing artifacts, reviewing artifact quality, analyzing code for automation opportunities, or consolidating duplicate artifacts."
+layer: 4
+tech_stack: [agnostic, markdown, yaml]
+topics: [skills, agents, commands, hooks, claude-code, artifacts, meta]
+depends_on: []
+complements: []
+keywords: [Skill, Agent, Command, Hook, SKILL.md, frontmatter, YAML, prompt-engineering]
 ---
 
 # Claude Artifact Creator
 
 Creates, improves, and maintains Claude Code extensions following official best practices.
+
+## FIRST: Read Meta-Knowledge
+
+**Before creating any artifact, READ `.claude/GUIDELINES.md`** for:
+- Decision framework (Skill vs Agent vs Command vs Hook)
+- Tool permissions strategy by role
+- Hook events and configuration
+- Agent/Skill/Command file formats
+- Quality checklists and anti-patterns
+
+This skill provides quick patterns; GUIDELINES.md provides authoritative rules.
 
 ## When to Use This Skill
 
@@ -93,16 +110,14 @@ description: I can help you with documents
 
 ## Decision Flowchart
 
+**Quick Reference:**
 ```
-What do you need?
-│
-├─ Deterministic action on events? → HOOK
-├─ User explicitly triggers with /cmd? → COMMAND
-├─ Claude auto-detects when to use?
-│   ├─ Needs context isolation? → AGENT
-│   └─ Progressive disclosure enough? → SKILL
-└─ Complex multi-step with persona? → AGENT
+User triggers explicitly → COMMAND
+Claude auto-detects → SKILL (no isolation) or AGENT (with isolation)
+Deterministic on events → HOOK
 ```
+
+**Full decision tree**: See [GUIDELINES.md § Choosing the Right Tool](..\..\GUIDELINES.md#choosing-the-right-tool)
 
 ## Creation Workflow
 
@@ -157,28 +172,11 @@ Claude Code includes built-in agents (cannot be modified):
 
 **Note**: Subagents cannot spawn other subagents.
 
-## Tool Permissions by Role
-
-| Role | Recommended Tools |
-|------|-------------------|
-| Read-only (reviewers) | `Read, Grep, Glob` |
-| Research | `Read, Grep, Glob, WebFetch, WebSearch` |
-| Code writers | `Read, Write, Edit, Bash, Glob, Grep` |
-| Documentation | `Read, Write, Edit, Glob, Grep, WebFetch, WebSearch` |
+## Tool Permissions & Hook Events
 
 ⚠️ **Warning**: Omitting `tools` grants ALL tools including MCP. Always whitelist explicitly.
 
-## Hook Events
-
-| Event | When | Use Case |
-|-------|------|----------|
-| `PreToolUse` | Before tool | Block/validate (exit 2 = block) |
-| `PostToolUse` | After tool | Auto-format, logging |
-| `SubagentStop` | Agent completes | HITL control |
-| `Notification` | Alert | Custom notifications |
-| `Stop` | Response done | Cleanup |
-| `SessionStart/End` | Session lifecycle | Init/cleanup |
-| `PreCompact` | Before compaction | Custom summarization |
+**Full reference**: See [GUIDELINES.md § Agents](..\..\GUIDELINES.md#agents-agents) for tool permissions by role, and [GUIDELINES.md § Hooks](..\..\GUIDELINES.md#hooks) for hook events.
 
 ## Best Practices
 
@@ -262,25 +260,15 @@ Rule: "Knowing" = Skill, "Doing" = Command
 
 ## References
 
-**By Type:**
+**Primary (READ FIRST):**
+- [`.claude/GUIDELINES.md`](..\..\GUIDELINES.md) - **Authoritative meta-knowledge** for all artifact creation
+
+**Skill-Specific:**
 - [references/skills/skill-types.md](references/skills/skill-types.md) - Archetypes
 - [references/agents/agent-categories.md](references/agents/agent-categories.md) - Role definitions
 - [references/commands/command-patterns.md](references/commands/command-patterns.md) - Patterns
-
-**Cross-Cutting:**
-- [references/decision-guide.md](references/decision-guide.md) - Skill vs Agent vs Command
 - [references/anti-patterns.md](references/anti-patterns.md) - What to avoid
 - [references/agent-refactoring-guide.md](references/agent-refactoring-guide.md) - Extract from agents
 
-**Project Guidelines:**
-- `.claude/GUIDELINES.md` - Official organization rules
-- `CLAUDE.md` - Project-specific context
-
-## Next Steps
-
-1. **Read GUIDELINES.md** - Understand official best practices
-2. **Review existing artifacts** - Run `scripts/validate.py` on current artifacts
-3. **Identify automation opportunities** - Analyze `git diff --staged` for patterns
-4. **Create focused artifacts** - One purpose per artifact
-5. **Test with multiple models** - Ensure compatibility
-6. **Document decisions** - Why this artifact exists
+**Project Context:**
+- `CLAUDE.md` - Project-specific values and quick references

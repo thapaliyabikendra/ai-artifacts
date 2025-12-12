@@ -1,6 +1,12 @@
 ---
 name: feature-development-workflow
 description: "Orchestrate end-to-end feature development from requirements through implementation, testing, and review. Use when: (1) planning feature development stages, (2) coordinating multi-agent feature workflows, (3) understanding SDLC phases for new features."
+layer: 4
+tech_stack: [agnostic]
+topics: [sdlc, feature-development, orchestration, multi-agent, workflow]
+depends_on: []
+complements: []
+keywords: [Feature, SDLC, Stage, Agent, Workflow, Requirements, Design, Implementation, Test]
 ---
 
 # Feature Development Workflow

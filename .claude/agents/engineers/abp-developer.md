@@ -4,7 +4,7 @@ description: "Implement backend modules using ABP Framework including AppService
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 permissionMode: acceptEdits
-skills: abp-framework-patterns, efcore-patterns, linq-optimization-patterns, dotnet-async-patterns, error-handling-patterns, csharp-advanced-patterns, fluentvalidation-patterns, openiddict-authorization
+skills: abp-framework-patterns, abp-entity-patterns, abp-service-patterns, abp-infrastructure-patterns, efcore-patterns, linq-optimization-patterns, dotnet-async-patterns, error-handling-patterns, csharp-advanced-patterns, fluentvalidation-patterns, openiddict-authorization
 ---
 
 # ABP Developer Agent

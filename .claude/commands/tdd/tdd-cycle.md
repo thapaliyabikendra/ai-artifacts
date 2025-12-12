@@ -1,26 +1,38 @@
 ---
 description: Execute TDD workflow with red-green-refactor discipline for ABP/.NET
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
-argument-hint: "<feature-or-component>" [--incremental] [--suite]
+argument-hint: "<feature-or-component>" [--phase red|green|refactor] [--incremental]
 ---
 
 # TDD Cycle Command
 
-Execute Test-Driven Development workflow using project agents.
+Execute Test-Driven Development workflow with optional phase selection.
 
 **Arguments**: $ARGUMENTS
 
 ## Workflow
 
 ```
-┌─────────┐   ┌─────────┐   ┌─────────┐
+┌─────────┐   ┌─────────┐   ┌──────────┐
 │ 1. RED  │ → │ 2.GREEN │ → │3.REFACTOR│
-│ (qa-    │   │ (abp-   │   │ (code-  │
-│ engineer│   │developer│   │ reviewer│
-└─────────┘   └─────────┘   └─────────┘
+│ (qa-    │   │ (abp-   │   │ (code-   │
+│ engineer│   │developer│   │ reviewer)│
+└─────────┘   └─────────┘   └──────────┘
      ↑                            │
      └────────────────────────────┘
 ```
+
+## Mode Selection
+
+| Option | Phases | Use When |
+|--------|--------|----------|
+| (default) | Red → Green → Refactor | Full TDD cycle |
+| `--phase red` | Red only | Write failing tests first |
+| `--phase green` | Green only | Implement to pass existing tests |
+| `--phase refactor` | Refactor only | Improve code quality |
+| `--incremental` | One test at a time | Fine-grained TDD |
+
+---
 
 ## Phase 1: RED - Write Failing Tests
 
@@ -35,9 +47,16 @@ Skills: Apply xunit-testing-patterns
 Requirements:
 - Tests MUST fail initially (missing implementation)
 - Use Arrange-Act-Assert pattern
+- Should_ExpectedBehavior_When_Condition naming
 - Include: happy path, validation, authorization, edge cases
 - Use Shouldly for assertions
 - Mock dependencies with NSubstitute
+
+Coverage Categories:
+1. Happy Path - Normal successful operations
+2. Validation - Invalid inputs, missing required fields
+3. Authorization - Permission checks, role-based access
+4. Edge Cases - Empty collections, boundary values, nulls
 
 Output: Test files in appropriate test project
 ```
@@ -86,6 +105,14 @@ Requirements:
 - Improve naming
 - Run tests after each change
 
+Code Smell Detection:
+| Smell | Refactoring |
+|-------|-------------|
+| Duplicated code | Extract method/class |
+| Long method | Decompose into focused methods |
+| Large class | Split responsibilities |
+| Long parameter list | Parameter object/DTO |
+
 Checklist:
 - [ ] Single responsibility per class/method
 - [ ] Proper async/await usage
@@ -97,35 +124,22 @@ Checklist:
 
 ---
 
-## Modes
+## Incremental Mode (`--incremental`)
 
-### Incremental Mode (`--incremental`)
 1. Write ONE failing test
 2. Make ONLY that test pass
 3. Refactor if needed
-4. Repeat
+4. Repeat for next test
 
-### Suite Mode (`--suite`)
-1. Write ALL tests for feature (failing)
-2. Implement to pass ALL tests
-3. Refactor entire module
+---
 
 ## Validation Checklist
 
-### RED Phase
-- [ ] Tests written before implementation
-- [ ] All tests fail with meaningful errors
-- [ ] Failures due to missing implementation
-
-### GREEN Phase
-- [ ] All tests pass
-- [ ] No extra code beyond requirements
-- [ ] Build succeeds
-
-### REFACTOR Phase
-- [ ] All tests still pass
-- [ ] Code complexity reduced
-- [ ] Duplication eliminated
+| Phase | Criteria |
+|-------|----------|
+| RED | Tests fail with meaningful errors, failures due to missing implementation |
+| GREEN | All tests pass, no extra code beyond requirements, build succeeds |
+| REFACTOR | All tests still pass, code complexity reduced, duplication eliminated |
 
 ## Coverage Thresholds
 
@@ -142,4 +156,4 @@ Checklist:
 
 ---
 
-TDD implementation for: $ARGUMENTS
+TDD target: $ARGUMENTS

@@ -1,6 +1,12 @@
 ---
 name: technical-design-patterns
 description: "Create technical design documents for ABP Framework features including API contracts, database schemas, and architecture decisions. Use when: (1) designing REST APIs, (2) planning database schemas, (3) creating technical specifications, (4) documenting architecture decisions (ADRs)."
+layer: 2
+tech_stack: [agnostic, markdown, mermaid]
+topics: [technical-specification, api-contract, database-schema, adr, architecture-decisions]
+depends_on: [mermaid-diagram-patterns]
+complements: [api-design-principles]
+keywords: [TSD, ADR, API Contract, Schema, ERD, Specification, Architecture]
 ---
 
 # Technical Design Patterns

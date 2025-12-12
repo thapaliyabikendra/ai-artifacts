@@ -31,47 +31,100 @@ For choosing between Agents, Skills, Commands, and Hooks, see **[.claude/GUIDELI
 
 **Creating artifacts**: Say "create a skill for..." or "create an agent that..." to auto-trigger the `claude-artifact-creator` skill.
 
+## Quick Skill Reference
+
+**Use directly for single-skill tasks (no file reads needed):**
+
+| Task | Skill |
+|------|-------|
+| Entity/DTO/AppService | `abp-framework-patterns` |
+| DbContext/Migration | `efcore-patterns` |
+| Input validation | `fluentvalidation-patterns` |
+| Permissions/Auth | `openiddict-authorization` |
+| Unit/Integration tests | `xunit-testing-patterns` |
+| Query optimization | `linq-optimization-patterns` |
+| API design | `api-design-principles` + `technical-design-patterns` |
+| Debug/errors | `debugging-patterns` |
+| Security audit | `security-patterns` |
+| React components | `react-development-patterns` |
+
+**For multi-skill tasks**: Read [SKILL-INDEX.md](.claude/SKILL-INDEX.md) and [CONTEXT-GRAPH.md](.claude/CONTEXT-GRAPH.md).
+
+**For full Knowledge Discovery Protocol**: See [GUIDELINES.md](.claude/GUIDELINES.md#knowledge-architecture).
+
 ## Available Agents (10)
 
-Located in `.claude/agents/` organized by role:
+Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-QUICK-REF.md](.claude/AGENT-QUICK-REF.md)
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| **Architects** | 2 | business-analyst, backend-architect |
-| **Engineers** | 3 | abp-developer, react-developer, devops-engineer |
-| **Reviewers** | 3 | code-reviewer, security-engineer, qa-engineer |
-| **Specialists** | 2 | debugger, database-migrator |
+### Quick Agent Selection
+
+| Task | Agent |
+|------|-------|
+| Analyze requirements | `business-analyst` |
+| Design API/schema | `backend-architect` |
+| Implement .NET/ABP | `abp-developer` |
+| Implement React | `react-developer` |
+| Review code | `code-reviewer` |
+| Security audit | `security-engineer` |
+| Write tests | `qa-engineer` |
+| Debug errors | `debugger` |
+| DB migrations | `database-migrator` |
+| CI/CD setup | `devops-engineer` |
+
+### Common Agent Chains
+
+| Workflow | Chain |
+|----------|-------|
+| Feature (full) | `business-analyst` → `backend-architect` → `abp-developer` → `qa-engineer` → `code-reviewer` |
+| Feature (fast) | `backend-architect` → `abp-developer` → `qa-engineer` |
+| Bug fix | `debugger` → `abp-developer` → `qa-engineer` |
 
 **Usage**: `Use the abp-developer agent to implement the Patient service`
 
-## Available Skills (27)
+## Available Skills (34)
 
 Located in `.claude/skills/` organized by topic:
 
 | Category | Count | Key Skills |
 |----------|-------|------------|
-| **Backend** | 9 | abp-framework-patterns, efcore-patterns, fluentvalidation-patterns |
+| **Backend** | 12 | abp-framework-patterns, abp-entity-patterns, abp-service-patterns, abp-infrastructure-patterns, efcore-patterns, fluentvalidation-patterns |
 | **Microservices** | 3 | distributed-events-advanced, grpc-integration-patterns, bulk-operations-patterns |
 | **API Design** | 2 | api-response-patterns, api-design-principles |
 | **Requirements** | 5 | requirements-engineering, domain-modeling, technical-design-patterns |
 | **Testing** | 3 | xunit-testing-patterns, e2e-testing-patterns, javascript-testing-patterns |
 | **Security** | 1 | security-patterns |
-| **Frontend** | 2 | typescript-advanced-types, modern-javascript-patterns |
+| **Frontend** | 3 | react-development-patterns, typescript-advanced-types, modern-javascript-patterns |
 | **DevOps** | 2 | docker-dotnet-containerize, git-advanced-workflows |
+| **Meta** | 3 | claude-artifact-creator, feature-development-workflow, knowledge-discovery |
 
-Skills are auto-triggered based on context. For ABP patterns, the `abp-framework-patterns` skill provides entity, AppService, DTO, and validation patterns.
+Skills are auto-triggered based on context. For ABP patterns, use `abp-framework-patterns` for overview or the focused skills: `abp-entity-patterns` (domain), `abp-service-patterns` (application), `abp-infrastructure-patterns` (cross-cutting).
 
-## Available Commands (9)
+## Available Commands (15)
 
-Located in `.claude/commands/` organized by action:
+Located in `.claude/commands/` organized by action. Full reference: [.claude/COMMAND-INDEX.md](.claude/COMMAND-INDEX.md)
 
-| Category | Commands |
-|----------|----------|
-| **Feature** | `/add-feature` - End-to-end feature development |
-| **Generate** | `/generate:entity`, `/generate:filter`, `/generate:migration` |
-| **TDD** | `/tdd-cycle`, `/tdd-red`, `/tdd-refactor` |
-| **Review** | `/review:permissions` |
-| **Debug** | `/smart-debug` |
+### Quick Command Reference
+
+| Task | Command |
+|------|---------|
+| New feature | `/feature:add-feature <name> "<requirements>"` |
+| Scaffold entity | `/generate:entity <Name> --properties "..."` |
+| Entity (fast mode) | `/generate:entity <Name> --properties "..." --fast` |
+| Filter DTO | `/generate:filter <Name>` |
+| DB migration | `/generate:migration <name>` |
+| TDD cycle | `/tdd:tdd-cycle "<feature>" [--phase red\|green\|refactor]` |
+| Audit permissions | `/review:permissions` |
+| Debug error | `/debug:smart-debug "<error>" [--fix]` |
+| Clean code | `/refactor:refactor-clean <path>` |
+| Audit deps | `/refactor:deps-audit` |
+| Tech debt | `/refactor:tech-debt` |
+| GitHub issue | `/team:issue <number>` |
+| Standup notes | `/team:standup-notes` |
+| Explain code | `/explain:code-explain <file>` |
+| Generate docs | `/generate:doc-generate <target>` |
+| API mocks | `/generate:api-mock <spec>` |
+
+Commands use reference templates in `.claude/commands/references/` for detailed patterns.
 
 ## Feature Development
 

@@ -1,6 +1,12 @@
 ---
 name: bulk-operations-patterns
 description: "Bulk data operations with Excel import/export, batch processing, and validation for ABP Framework. Use when: (1) implementing bulk import/update from Excel/CSV, (2) batch processing with progress tracking, (3) file upload with validation, (4) bulk database operations with InsertManyAsync/UpdateManyAsync."
+layer: 3
+tech_stack: [dotnet, csharp, abp, efcore]
+topics: [excel-import, csv, batch-processing, bulk-insert, progress-tracking]
+depends_on: [efcore-patterns]
+complements: [abp-framework-patterns]
+keywords: [Excel, CSV, InsertManyAsync, UpdateManyAsync, Batch, Progress, ClosedXML]
 ---
 
 # Bulk Operations Patterns

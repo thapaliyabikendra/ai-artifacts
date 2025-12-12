@@ -1,6 +1,12 @@
 ---
 name: e2e-testing-patterns
-description: Master end-to-end testing with Playwright and Cypress to build reliable test suites that catch bugs, improve confidence, and enable fast deployment. Use when implementing E2E tests, debugging flaky tests, or establishing testing standards.
+description: "Master end-to-end testing with Playwright to build reliable test suites that catch bugs, improve confidence, and enable fast deployment. Use when implementing E2E tests, debugging flaky tests, or establishing testing standards."
+layer: 3
+tech_stack: [typescript, playwright]
+topics: [playwright, browser-automation, page-objects, visual-testing]
+depends_on: []
+complements: [javascript-testing-patterns]
+keywords: [Playwright, Page, Locator, expect, test, beforeEach, fixture]
 ---
 
 # E2E Testing Patterns
@@ -292,100 +298,6 @@ test('payment flow with mocked Stripe', async ({ page }) => {
 });
 ```
 
-## Cypress Patterns
-
-### Setup and Configuration
-
-```typescript
-// cypress.config.ts
-import { defineConfig } from 'cypress';
-
-export default defineConfig({
-    e2e: {
-        baseUrl: 'http://localhost:3000',
-        viewportWidth: 1280,
-        viewportHeight: 720,
-        video: false,
-        screenshotOnRunFailure: true,
-        defaultCommandTimeout: 10000,
-        requestTimeout: 10000,
-        setupNodeEvents(on, config) {
-            // Implement node event listeners
-        },
-    },
-});
-```
-
-### Pattern 1: Custom Commands
-
-```typescript
-// cypress/support/commands.ts
-declare global {
-    namespace Cypress {
-        interface Chainable {
-            login(email: string, password: string): Chainable<void>;
-            createUser(userData: UserData): Chainable<User>;
-            dataCy(value: string): Chainable<JQuery<HTMLElement>>;
-        }
-    }
-}
-
-Cypress.Commands.add('login', (email: string, password: string) => {
-    cy.visit('/login');
-    cy.get('[data-testid="email"]').type(email);
-    cy.get('[data-testid="password"]').type(password);
-    cy.get('[data-testid="login-button"]').click();
-    cy.url().should('include', '/dashboard');
-});
-
-Cypress.Commands.add('createUser', (userData: UserData) => {
-    return cy.request('POST', '/api/users', userData)
-        .its('body');
-});
-
-Cypress.Commands.add('dataCy', (value: string) => {
-    return cy.get(`[data-cy="${value}"]`);
-});
-
-// Usage
-cy.login('user@example.com', 'password');
-cy.dataCy('submit-button').click();
-```
-
-### Pattern 2: Cypress Intercept
-
-```typescript
-// Mock API calls
-cy.intercept('GET', '/api/users', {
-    statusCode: 200,
-    body: [
-        { id: 1, name: 'John' },
-        { id: 2, name: 'Jane' },
-    ],
-}).as('getUsers');
-
-cy.visit('/users');
-cy.wait('@getUsers');
-cy.get('[data-testid="user-list"]').children().should('have.length', 2);
-
-// Modify responses
-cy.intercept('GET', '/api/users', (req) => {
-    req.reply((res) => {
-        // Modify response
-        res.body.users = res.body.users.slice(0, 5);
-        res.send();
-    });
-});
-
-// Simulate slow network
-cy.intercept('GET', '/api/data', (req) => {
-    req.reply((res) => {
-        res.delay(3000);  // 3 second delay
-        res.send();
-    });
-});
-```
-
 ## Advanced Patterns
 
 ### Pattern 1: Visual Regression Testing
@@ -486,14 +398,14 @@ test('form is accessible', async ({ page }) => {
 8. **Optimize for Speed**: Mock when possible, parallel execution
 
 ```typescript
-// ❌ Bad selectors
-cy.get('.btn.btn-primary.submit-button').click();
-cy.get('div > form > div:nth-child(2) > input').type('text');
+// ❌ Bad selectors (Playwright)
+await page.locator('.btn.btn-primary.submit-button').click();
+await page.locator('div > form > div:nth-child(2) > input').fill('text');
 
-// ✅ Good selectors
-cy.getByRole('button', { name: 'Submit' }).click();
-cy.getByLabel('Email address').type('user@example.com');
-cy.get('[data-testid="email-input"]').type('user@example.com');
+// ✅ Good selectors (Playwright)
+await page.getByRole('button', { name: 'Submit' }).click();
+await page.getByLabel('Email address').fill('user@example.com');
+await page.getByTestId('email-input').fill('user@example.com');
 ```
 
 ## Common Pitfalls
@@ -540,7 +452,6 @@ await page.pause();  // Pauses execution, opens inspector
 ## Resources
 
 - **references/playwright-best-practices.md**: Playwright-specific patterns
-- **references/cypress-best-practices.md**: Cypress-specific patterns
 - **references/flaky-test-debugging.md**: Debugging unreliable tests
 - **assets/e2e-testing-checklist.md**: What to test with E2E
 - **assets/selector-strategies.md**: Finding reliable selectors

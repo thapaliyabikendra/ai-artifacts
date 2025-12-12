@@ -1,6 +1,12 @@
 ---
 name: fluentvalidation-patterns
 description: "Master FluentValidation patterns for ABP Framework including async validators, repository checks, conditional rules, localized messages, and custom validators. Use when creating input DTO validators for AppServices."
+layer: 2
+tech_stack: [dotnet, csharp, abp]
+topics: [validation, dto-validation, async-validation, business-rules, localization]
+depends_on: [error-handling-patterns]
+complements: [abp-framework-patterns]
+keywords: [FluentValidation, AbstractValidator, RuleFor, MustAsync, NotEmpty, MaximumLength]
 ---
 
 # FluentValidation Patterns
@@ -483,6 +489,16 @@ private async Task<bool> BeUniqueEmailAsync(
 - [ ] Unique constraints validated with repository check
 - [ ] Error messages are localized
 - [ ] Validators registered in module
+
+## Shared Knowledge
+
+For foundational patterns, see the shared knowledge base:
+
+| Topic | File | Description |
+|-------|------|-------------|
+| Naming conventions | [knowledge/conventions/naming.md](../../knowledge/conventions/naming.md) | Validator naming patterns |
+| Validation example | [knowledge/examples/validation-chain.md](../../knowledge/examples/validation-chain.md) | Complete validation examples |
+| Folder structure | [knowledge/conventions/folder-structure.md](../../knowledge/conventions/folder-structure.md) | Validator file locations |
 
 ## Integration Points
 

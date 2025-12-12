@@ -1,6 +1,12 @@
 ---
 name: docker-dotnet-containerize
-description: Generate production-ready Docker configurations for .NET APIs with multi-stage builds, Alpine optimization, layer caching, and build scripts. Use when containerizing .NET applications, creating Dockerfiles, or optimizing existing Docker setups.
+description: "Generate production-ready Docker configurations for .NET APIs with multi-stage builds, Alpine optimization, layer caching, and build scripts. Use when containerizing .NET applications, creating Dockerfiles, or optimizing existing Docker setups."
+layer: 1
+tech_stack: [docker, dotnet]
+topics: [dockerfile, multi-stage, alpine, layer-caching, docker-compose, optimization]
+depends_on: []
+complements: []
+keywords: [Dockerfile, docker-compose, FROM, COPY, RUN, ENTRYPOINT, Alpine, multi-stage]
 ---
 
 # .NET Docker Containerization Skill

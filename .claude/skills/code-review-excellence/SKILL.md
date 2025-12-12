@@ -1,6 +1,12 @@
 ---
 name: code-review-excellence
-description: Master effective code review practices to provide constructive feedback, catch bugs early, and foster knowledge sharing while maintaining team morale. Use when reviewing pull requests, establishing review standards, or mentoring developers.
+description: "Master effective code review practices to provide constructive feedback, catch bugs early, and foster knowledge sharing while maintaining team morale. Use when reviewing pull requests, establishing review standards, or mentoring developers."
+layer: 1
+tech_stack: [dotnet, csharp, typescript, react]
+topics: [pull-requests, feedback, code-quality, mentoring, best-practices]
+depends_on: []
+complements: []
+keywords: [PR, CodeReview, Feedback, LGTM, Nit, Suggestion, Blocking]
 ---
 
 # Code Review Excellence
@@ -239,44 +245,70 @@ Example:
 
 ## Language-Specific Patterns
 
-### Python Code Review
+### C#/.NET Code Review
 
-```python
-# Check for Python-specific issues
+```csharp
+// Check for C#-specific issues
 
-# ❌ Mutable default arguments
-def add_item(item, items=[]):  # Bug! Shared across calls
-    items.append(item)
-    return items
+// ❌ Not using async/await correctly
+public Patient GetPatient(Guid id)
+{
+    return _repository.GetAsync(id).Result; // Blocks thread, can deadlock!
+}
 
-# ✅ Use None as default
-def add_item(item, items=None):
-    if items is None:
-        items = []
-    items.append(item)
-    return items
+// ✅ Proper async/await
+public async Task<Patient> GetPatientAsync(Guid id)
+{
+    return await _repository.GetAsync(id);
+}
 
-# ❌ Catching too broad
-try:
-    result = risky_operation()
-except:  # Catches everything, even KeyboardInterrupt!
-    pass
+// ❌ Catching too broad
+try
+{
+    await RiskyOperationAsync();
+}
+catch (Exception) // Catches everything!
+{
+    // Swallowed silently
+}
 
-# ✅ Catch specific exceptions
-try:
-    result = risky_operation()
-except ValueError as e:
-    logger.error(f"Invalid value: {e}")
-    raise
+// ✅ Catch specific exceptions
+try
+{
+    await RiskyOperationAsync();
+}
+catch (DbUpdateException ex)
+{
+    _logger.LogError(ex, "Database update failed");
+    throw new BusinessException("Could not save changes");
+}
 
-# ❌ Using mutable class attributes
-class User:
-    permissions = []  # Shared across all instances!
+// ❌ Mutable static field (thread-unsafe)
+public class UserService
+{
+    private static List<User> _cache = new(); // Shared, not thread-safe!
+}
 
-# ✅ Initialize in __init__
-class User:
-    def __init__(self):
-        self.permissions = []
+// ✅ Use thread-safe collections or DI
+public class UserService
+{
+    private readonly ConcurrentDictionary<Guid, User> _cache = new();
+    // Or better: inject ICacheService via DI
+}
+
+// ❌ Not disposing resources
+public void ProcessFile(string path)
+{
+    var stream = new FileStream(path, FileMode.Open);
+    // stream never disposed!
+}
+
+// ✅ Use 'using' for disposables
+public async Task ProcessFileAsync(string path)
+{
+    await using var stream = new FileStream(path, FileMode.Open);
+    // Automatically disposed
+}
 ```
 
 ### TypeScript/JavaScript Code Review

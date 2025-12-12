@@ -1,6 +1,12 @@
 ---
 name: csharp-advanced-patterns
 description: "Master advanced C# patterns including records, pattern matching, async/await, LINQ, and performance optimization for .NET 10. Use when: (1) implementing complex C# patterns, (2) optimizing performance, (3) refactoring legacy code, (4) writing modern idiomatic C#."
+layer: 1
+tech_stack: [dotnet, csharp]
+topics: [records, pattern-matching, linq, generics, nullable, span, performance]
+depends_on: []
+complements: [dotnet-async-patterns]
+keywords: [record, switch, pattern, Span, Memory, required, init, LINQ]
 ---
 
 # C# Advanced Patterns

@@ -1,6 +1,12 @@
 ---
 name: security-patterns
 description: "Web application security patterns including STRIDE threat modeling, OWASP Top 10 compliance, ABP authorization, and security audit procedures. Use when: (1) conducting security audits, (2) implementing authentication/authorization, (3) creating threat models, (4) reviewing code for vulnerabilities."
+layer: 3
+tech_stack: [dotnet, csharp, typescript, react]
+topics: [stride, owasp, threat-modeling, security-audit, xss, sql-injection, csrf]
+depends_on: [openiddict-authorization]
+complements: [abp-framework-patterns]
+keywords: [STRIDE, OWASP, XSS, CSRF, SQLInjection, ThreatModel, SecurityAudit]
 ---
 
 # Security Patterns for Web Applications

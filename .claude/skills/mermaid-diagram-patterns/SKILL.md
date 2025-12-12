@@ -1,6 +1,12 @@
 ---
 name: mermaid-diagram-patterns
 description: "Create Mermaid diagrams for technical documentation including ERDs, sequence diagrams, flowcharts, and architecture diagrams. Use when: (1) designing database schemas (ERD), (2) documenting API interactions (sequence), (3) illustrating process flows (flowchart), (4) visualizing system architecture."
+layer: 1
+tech_stack: [mermaid, markdown]
+topics: [erd, sequence-diagram, flowchart, class-diagram, architecture-diagram]
+depends_on: []
+complements: [technical-design-patterns]
+keywords: [Mermaid, ERD, Sequence, Flowchart, Graph, ClassDiagram, erDiagram]
 ---
 
 # Mermaid Diagram Patterns

@@ -1,6 +1,12 @@
 ---
 name: debugging-patterns
 description: "Debug .NET/ABP and React applications with systematic root cause analysis. Use when: (1) investigating bugs or errors, (2) analyzing stack traces, (3) diagnosing N+1 queries, (4) fixing async deadlocks, (5) resolving React state issues."
+layer: 1
+tech_stack: [dotnet, csharp, typescript, react]
+topics: [root-cause-analysis, stack-traces, logging, profiling, breakpoints]
+depends_on: []
+complements: [error-handling-patterns]
+keywords: [Debug, StackTrace, Logging, Profiler, Breakpoint, Exception, NullReference]
 ---
 
 # Debugging Patterns

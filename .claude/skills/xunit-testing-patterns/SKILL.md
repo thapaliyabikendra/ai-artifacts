@@ -1,6 +1,12 @@
 ---
 name: xunit-testing-patterns
 description: "Master xUnit testing patterns for ABP Framework applications including unit tests, integration tests, test data seeders, and mocking strategies. Use when: (1) writing xUnit tests for ABP services, (2) creating test data seeders, (3) implementing integration tests, (4) setting up test infrastructure."
+layer: 3
+tech_stack: [dotnet, csharp, xunit]
+topics: [unit-testing, integration-testing, mocking, test-data, shouldly, nsubstitute, interface-first]
+depends_on: [abp-framework-patterns]
+complements: [e2e-testing-patterns]
+keywords: [xUnit, Fact, Theory, Shouldly, NSubstitute, TestBase, DataSeeder, InlineData, Interface-First]
 ---
 
 # xUnit Testing Patterns for ABP Framework
@@ -15,6 +21,7 @@ Comprehensive testing patterns for ABP Framework applications using xUnit, Shoul
 - Mocking repositories and services
 - Testing authorization and validation
 - Writing domain service tests
+- **Interface-first testing** (writing tests before implementation)
 
 ## Test Project Structure
 
@@ -39,6 +46,48 @@ Comprehensive testing patterns for ABP Framework applications using xUnit, Shoul
     └── {Entity}Manager_Tests.cs       # Domain service tests
 ```
 
+## Interface-First Testing (NEW)
+
+Write tests against interfaces **before implementation exists**. This enables parallel development in `/add-feature` workflow.
+
+### Benefits
+
+1. Tests can be written as soon as interface contracts exist
+2. Enables true parallel execution of `abp-developer` and `qa-engineer`
+3. Tests document expected behavior
+4. Catches interface design issues early
+
+### Example: Testing Against Interface
+
+```csharp
+// This test compiles and is ready to run once implementation exists
+public class PatientAppService_Tests : ClinicApplicationTestBase
+{
+    private readonly IPatientAppService _patientAppService;
+
+    public PatientAppService_Tests()
+    {
+        // Resolves implementation from DI container
+        _patientAppService = GetRequiredService<IPatientAppService>();
+    }
+
+    [Fact]
+    public async Task GetAsync_WithValidId_ReturnsPatient()
+    {
+        // Arrange - uses test data constants
+        var patientId = PatientTestData.Patient1Id;
+
+        // Act - calls interface method
+        var result = await _patientAppService.GetAsync(patientId);
+
+        // Assert - validates contract expectations
+        result.ShouldNotBeNull();
+        result.Id.ShouldBe(patientId);
+        result.FirstName.ShouldBe(PatientTestData.Patient1FirstName);
+    }
+}
+```
+
 ## Core Templates
 
 ### Test Data Constants
@@ -47,20 +96,32 @@ Comprehensive testing patterns for ABP Framework applications using xUnit, Shoul
 // {ProjectName}.TestBase/{Feature}/{Entity}TestData.cs
 namespace {ProjectName}.{Feature};
 
-public static class {Entity}TestData
+public static class PatientTestData
 {
-    public static Guid {Entity}1Id { get; } = Guid.Parse("00000000-0000-0000-0000-000000000001");
-    public static Guid {Entity}2Id { get; } = Guid.Parse("00000000-0000-0000-0000-000000000002");
+    // Use deterministic GUIDs for test reproducibility
+    public static Guid Patient1Id { get; } = Guid.Parse("00000000-0000-0000-0001-000000000001");
+    public static Guid Patient2Id { get; } = Guid.Parse("00000000-0000-0000-0001-000000000002");
+    public static Guid NonExistentId { get; } = Guid.Parse("00000000-0000-0000-0001-999999999999");
 
-    public const string {Entity}1Name = "Test {Entity} 1";
-    public const string {Entity}1Email = "test1@example.com";
+    // Valid test data
+    public const string Patient1FirstName = "John";
+    public const string Patient1LastName = "Doe";
+    public const string Patient1Email = "john.doe@example.com";
 
-    public const string {Entity}2Name = "Test {Entity} 2";
-    public const string {Entity}2Email = "test2@example.com";
+    public const string Patient2FirstName = "Jane";
+    public const string Patient2LastName = "Smith";
+    public const string Patient2Email = "jane.smith@example.com";
+
+    // Valid data for create tests
+    public const string ValidFirstName = "New";
+    public const string ValidLastName = "Patient";
+    public const string ValidEmail = "new.patient@example.com";
 
     // Invalid data for negative tests
+    public const string EmptyString = "";
+    public const string WhitespaceString = "   ";
+    public static readonly string TooLongName = new('X', 256);
     public const string InvalidEmail = "not-an-email";
-    public const string TooLongName = "This name is way too long and should exceed the maximum length constraint of one hundred characters in the database";
 }
 ```
 
@@ -68,46 +129,47 @@ public static class {Entity}TestData
 
 ```csharp
 // {ProjectName}.TestBase/{Feature}/{Entity}TestDataSeedContributor.cs
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Guids;
 
 namespace {ProjectName}.{Feature};
 
-public class {Entity}TestDataSeedContributor : IDataSeedContributor, ITransientDependency
+public class PatientTestDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
-    private readonly IRepository<{Entity}, Guid> _repository;
-    private readonly IGuidGenerator _guidGenerator;
+    private readonly IRepository<Patient, Guid> _repository;
 
-    public {Entity}TestDataSeedContributor(
-        IRepository<{Entity}, Guid> repository,
-        IGuidGenerator guidGenerator)
+    public PatientTestDataSeedContributor(IRepository<Patient, Guid> repository)
     {
         _repository = repository;
-        _guidGenerator = guidGenerator;
     }
 
     public async Task SeedAsync(DataSeedContext context)
     {
+        // Idempotent seeding
         if (await _repository.GetCountAsync() > 0)
         {
             return;
         }
 
+        // Patient 1 - Active
         await _repository.InsertAsync(
-            new {Entity}(
-                {Entity}TestData.{Entity}1Id,
-                {Entity}TestData.{Entity}1Name,
-                {Entity}TestData.{Entity}1Email),
+            new Patient(
+                PatientTestData.Patient1Id,
+                PatientTestData.Patient1FirstName,
+                PatientTestData.Patient1LastName,
+                PatientTestData.Patient1Email),
             autoSave: true);
 
+        // Patient 2 - For deletion/update tests
         await _repository.InsertAsync(
-            new {Entity}(
-                {Entity}TestData.{Entity}2Id,
-                {Entity}TestData.{Entity}2Name,
-                {Entity}TestData.{Entity}2Email),
+            new Patient(
+                PatientTestData.Patient2Id,
+                PatientTestData.Patient2FirstName,
+                PatientTestData.Patient2LastName,
+                PatientTestData.Patient2Email),
             autoSave: true);
     }
 }
@@ -115,18 +177,13 @@ public class {Entity}TestDataSeedContributor : IDataSeedContributor, ITransientD
 
 ### AppService Test Class
 
+For full test class template with all CRUD operations, lifecycle tests, and mocking patterns:
+**See [references/appservice-test-template.md](references/appservice-test-template.md)**
+
+**Quick example:**
+
 ```csharp
-// {ProjectName}.Application.Tests/{Feature}/{Entity}AppService_Tests.cs
-using System;
-using System.Threading.Tasks;
-using Shouldly;
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Validation;
-using Xunit;
-
-namespace {ProjectName}.{Feature};
-
+[Trait("Category", "Integration")]
 public class {Entity}AppService_Tests : {ProjectName}ApplicationTestBase
 {
     private readonly I{Entity}AppService _{entity}AppService;
@@ -136,175 +193,22 @@ public class {Entity}AppService_Tests : {ProjectName}ApplicationTestBase
         _{entity}AppService = GetRequiredService<I{Entity}AppService>();
     }
 
-    #region GetAsync Tests
-
     [Fact]
-    public async Task Should_Get_{Entity}_By_Id()
+    public async Task GetAsync_WithValidId_Returns{Entity}()
     {
-        // Act
         var result = await _{entity}AppService.GetAsync({Entity}TestData.{Entity}1Id);
-
-        // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldBe({Entity}TestData.{Entity}1Id);
-        result.Name.ShouldBe({Entity}TestData.{Entity}1Name);
     }
 
     [Fact]
-    public async Task Should_Throw_When_{Entity}_Not_Found()
+    public async Task CreateAsync_WithValidInput_CreatesAndReturns{Entity}()
     {
-        // Arrange
-        var nonExistentId = Guid.NewGuid();
-
-        // Act & Assert
-        await Should.ThrowAsync<EntityNotFoundException>(
-            async () => await _{entity}AppService.GetAsync(nonExistentId));
-    }
-
-    #endregion
-
-    #region GetListAsync Tests
-
-    [Fact]
-    public async Task Should_Get_Paginated_{Entity}_List()
-    {
-        // Act
-        var result = await _{entity}AppService.GetListAsync(
-            new Get{Entity}ListInput { MaxResultCount = 10 });
-
-        // Assert
-        result.ShouldNotBeNull();
-        result.TotalCount.ShouldBeGreaterThanOrEqualTo(2);
-        result.Items.Count.ShouldBeGreaterThanOrEqualTo(2);
-    }
-
-    [Fact]
-    public async Task Should_Filter_{Entity}_List_By_Name()
-    {
-        // Act
-        var result = await _{entity}AppService.GetListAsync(
-            new Get{Entity}ListInput { Filter = "Test {Entity} 1" });
-
-        // Assert
-        result.Items.ShouldContain(x => x.Name == {Entity}TestData.{Entity}1Name);
-    }
-
-    #endregion
-
-    #region CreateAsync Tests
-
-    [Fact]
-    public async Task Should_Create_{Entity}_With_Valid_Input()
-    {
-        // Arrange
-        var input = new CreateUpdate{Entity}Dto
-        {
-            Name = "New Test {Entity}",
-            Email = "new@example.com"
-        };
-
-        // Act
+        var input = new Create{Entity}Dto { Name = {Entity}TestData.ValidName };
         var result = await _{entity}AppService.CreateAsync(input);
-
-        // Assert
         result.ShouldNotBeNull();
         result.Id.ShouldNotBe(Guid.Empty);
-        result.Name.ShouldBe(input.Name);
-        result.Email.ShouldBe(input.Email);
     }
-
-    [Fact]
-    public async Task Should_Throw_When_Creating_With_Empty_Name()
-    {
-        // Arrange
-        var input = new CreateUpdate{Entity}Dto
-        {
-            Name = "",
-            Email = "test@example.com"
-        };
-
-        // Act & Assert
-        await Should.ThrowAsync<AbpValidationException>(
-            async () => await _{entity}AppService.CreateAsync(input));
-    }
-
-    [Fact]
-    public async Task Should_Throw_When_Creating_With_Invalid_Email()
-    {
-        // Arrange
-        var input = new CreateUpdate{Entity}Dto
-        {
-            Name = "Test Name",
-            Email = {Entity}TestData.InvalidEmail
-        };
-
-        // Act & Assert
-        await Should.ThrowAsync<AbpValidationException>(
-            async () => await _{entity}AppService.CreateAsync(input));
-    }
-
-    #endregion
-
-    #region UpdateAsync Tests
-
-    [Fact]
-    public async Task Should_Update_{Entity}_With_Valid_Input()
-    {
-        // Arrange
-        var input = new CreateUpdate{Entity}Dto
-        {
-            Name = "Updated Name",
-            Email = "updated@example.com"
-        };
-
-        // Act
-        var result = await _{entity}AppService.UpdateAsync(
-            {Entity}TestData.{Entity}1Id, input);
-
-        // Assert
-        result.Name.ShouldBe(input.Name);
-        result.Email.ShouldBe(input.Email);
-    }
-
-    [Fact]
-    public async Task Should_Throw_When_Updating_Non_Existent_{Entity}()
-    {
-        // Arrange
-        var input = new CreateUpdate{Entity}Dto
-        {
-            Name = "Updated Name",
-            Email = "updated@example.com"
-        };
-
-        // Act & Assert
-        await Should.ThrowAsync<EntityNotFoundException>(
-            async () => await _{entity}AppService.UpdateAsync(Guid.NewGuid(), input));
-    }
-
-    #endregion
-
-    #region DeleteAsync Tests
-
-    [Fact]
-    public async Task Should_Delete_{Entity}()
-    {
-        // Act
-        await _{entity}AppService.DeleteAsync({Entity}TestData.{Entity}2Id);
-
-        // Assert
-        await Should.ThrowAsync<EntityNotFoundException>(
-            async () => await _{entity}AppService.GetAsync({Entity}TestData.{Entity}2Id));
-    }
-
-    [Fact]
-    public async Task Should_Throw_When_Deleting_Non_Existent_{Entity}()
-    {
-        // Act & Assert
-        await Should.ThrowAsync<EntityNotFoundException>(
-            async () => await _{entity}AppService.DeleteAsync(Guid.NewGuid()));
-    }
-
-    #endregion
 }
 ```
 
@@ -329,9 +233,9 @@ Test input validation and constraints.
 [InlineData("")]
 [InlineData(null)]
 [InlineData("   ")]
-public async Task Should_Reject_Invalid_Name(string name)
+public async Task Should_Reject_Invalid_Name(string? name)
 {
-    var input = new CreateDto { Name = name };
+    var input = new CreateDto { Name = name! };
     await Should.ThrowAsync<AbpValidationException>(
         () => _service.CreateAsync(input));
 }
@@ -375,38 +279,43 @@ public async Task Should_Handle_Max_Page_Size()
 }
 ```
 
+### 5. Lifecycle Tests (for Activate/Deactivate patterns)
+
+See [references/appservice-test-template.md](references/appservice-test-template.md) for full lifecycle test examples.
+
+## Test Traits for Organization
+
+```csharp
+// Categorize tests for selective execution
+[Trait("Category", "Unit")]
+[Trait("Feature", "Patients")]
+public class PatientAppService_UnitTests { }
+
+[Trait("Category", "Integration")]
+[Trait("Feature", "Patients")]
+public class PatientAppService_IntegrationTests { }
+
+// Run by category:
+// dotnet test --filter "Category=Unit"
+// dotnet test --filter "Feature=Patients"
+```
+
 ## Mocking with NSubstitute
 
 ```csharp
 using NSubstitute;
 
-public class {Entity}AppService_UnitTests
-{
-    private readonly I{Entity}Repository _repository;
-    private readonly {Entity}AppService _service;
+// Create mock
+var repository = Substitute.For<IRepository<{Entity}, Guid>>();
 
-    public {Entity}AppService_UnitTests()
-    {
-        _repository = Substitute.For<I{Entity}Repository>();
-        _service = new {Entity}AppService(_repository);
-    }
+// Setup return value
+repository.GetAsync(entityId).Returns(entity);
 
-    [Fact]
-    public async Task Should_Call_Repository_GetAsync()
-    {
-        // Arrange
-        var entityId = Guid.NewGuid();
-        var entity = new {Entity}(entityId, "Test", "test@example.com");
-        _repository.GetAsync(entityId).Returns(entity);
-
-        // Act
-        await _service.GetAsync(entityId);
-
-        // Assert
-        await _repository.Received(1).GetAsync(entityId);
-    }
-}
+// Verify call
+await repository.Received(1).GetAsync(entityId);
 ```
+
+For full mocking examples, see [references/appservice-test-template.md](references/appservice-test-template.md).
 
 ## Shouldly Assertion Patterns
 
@@ -423,14 +332,21 @@ result.Name.ShouldNotBe(oldName);
 result.Items.ShouldNotBeEmpty();
 result.Items.ShouldContain(x => x.Name == "Test");
 result.Items.Count.ShouldBe(5);
+result.Items.ShouldAllBe(x => x.IsActive);
 
 // Numeric comparisons
 result.TotalCount.ShouldBeGreaterThan(0);
 result.TotalCount.ShouldBeLessThanOrEqualTo(100);
+result.TotalCount.ShouldBeInRange(1, 100);
 
 // String assertions
 result.Name.ShouldStartWith("Test");
 result.Email.ShouldContain("@");
+result.Name.ShouldNotBeNullOrWhiteSpace();
+
+// Boolean assertions
+result.IsActive.ShouldBeTrue();
+result.IsDeleted.ShouldBeFalse();
 
 // Exception assertions
 await Should.ThrowAsync<EntityNotFoundException>(
@@ -440,6 +356,51 @@ var ex = await Should.ThrowAsync<BusinessException>(
     async () => await _service.CreateAsync(input));
 ex.Code.ShouldBe("DuplicateEmail");
 ```
+
+## Parallel Test Safety
+
+When tests run in parallel, ensure data isolation:
+
+```csharp
+// Use unique IDs per test class
+public static class PatientTestData
+{
+    // Include feature identifier in GUIDs to avoid collisions
+    private const string FeaturePrefix = "00000000-0000-0001";
+
+    public static Guid Patient1Id { get; } = Guid.Parse($"{FeaturePrefix}-0001-000000000001");
+    public static Guid Patient2Id { get; } = Guid.Parse($"{FeaturePrefix}-0001-000000000002");
+}
+```
+
+## Test Checklist
+
+For each AppService, verify:
+
+- [ ] GetAsync - valid ID returns entity
+- [ ] GetAsync - non-existent ID throws EntityNotFoundException
+- [ ] GetListAsync - returns paginated results
+- [ ] GetListAsync - respects filters
+- [ ] GetListAsync - respects pagination
+- [ ] CreateAsync - valid input creates entity
+- [ ] CreateAsync - empty required field throws validation
+- [ ] CreateAsync - exceeds max length throws validation
+- [ ] UpdateAsync - valid input updates entity
+- [ ] UpdateAsync - non-existent ID throws EntityNotFoundException
+- [ ] DeleteAsync - valid ID deletes entity
+- [ ] DeleteAsync - non-existent ID throws EntityNotFoundException
+- [ ] (If applicable) ActivateAsync - activates inactive entity
+- [ ] (If applicable) DeactivateAsync - deactivates active entity
+
+## Shared Knowledge
+
+For foundational patterns, see the shared knowledge base:
+
+| Topic | File | Description |
+|-------|------|-------------|
+| Folder structure | [knowledge/conventions/folder-structure.md](../../knowledge/conventions/folder-structure.md) | Test project layout |
+| Naming conventions | [knowledge/conventions/naming.md](../../knowledge/conventions/naming.md) | Test class naming |
+| CRUD example | [knowledge/examples/crud-entity.md](../../knowledge/examples/crud-entity.md) | Test target example |
 
 ## References
 
