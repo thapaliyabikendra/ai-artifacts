@@ -299,6 +299,61 @@ public async Task<PatientDto> GetAsync(Guid id)
 - [ ] Anomaly detection configured
 - [ ] Log integrity protected
 
+## Authorization Anti-Patterns (Quick Scan)
+
+Use this table for rapid code review scanning:
+
+| Pattern | Risk Level | Fix |
+|---------|------------|-----|
+| No `[Authorize]` on public method | 🔴 CRITICAL | Add `[Authorize(Permission)]` |
+| `[Authorize]` only at class level | 🟡 MEDIUM | Add method-level permissions for mutations |
+| No permission check for bulk operations | 🔴 HIGH | Check permission per operation or batch |
+| Missing `[RequiresTenant]` on tenant-specific ops | 🔴 HIGH | Add `[RequiresTenant]` attribute |
+| `_dataFilter.Disable<IMultiTenant>()` without comment | 🔴 CRITICAL | Add justification comment or remove |
+| Hardcoded secrets in code | 🔴 CRITICAL | Use configuration/secrets management |
+| PII in log messages | 🟡 MEDIUM | Log identifiers only, not PII |
+
+## Multi-Tenancy Security
+
+### Dangerous Pattern: Disabling Tenant Filter
+
+```csharp
+// ⚠️ DANGEROUS: Cross-tenant data exposure risk!
+using (_dataFilter.Disable<IMultiTenant>())
+{
+    // This query now sees ALL tenants' data!
+    var exists = await _repository.AnyAsync(x => x.Code == code);
+}
+```
+
+**Risks:**
+- Cross-tenant data leakage
+- Incorrect validation results (e.g., "code already exists" when it exists in another tenant)
+- Security audit failures
+
+### When Disabling is Justified (Rare)
+
+Only disable multi-tenancy with explicit justification comment:
+
+```csharp
+// ✅ JUSTIFIED: License plate numbers must be globally unique across all tenants
+// to ensure physical warehouse operations don't conflict between tenants sharing facilities.
+// Approved by: [Name] on [Date]
+using (_dataFilter.Disable<IMultiTenant>())
+{
+    var existsGlobally = await _licensePlateRepository.AnyAsync(
+        lp => lp.LicensePlateNumber == input.LicensePlateNumber && !lp.ShippedOut);
+}
+```
+
+### Multi-Tenancy Security Checklist
+
+- [ ] No `_dataFilter.Disable<IMultiTenant>()` without documented justification
+- [ ] Cross-tenant uniqueness checks are truly required (not accidental)
+- [ ] Error messages don't reveal other tenants' data
+- [ ] Audit logging captures cross-tenant operations
+- [ ] Unit tests verify tenant isolation
+
 ## Common Vulnerability Patterns
 
 ### Missing Authorization

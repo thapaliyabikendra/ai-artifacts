@@ -204,7 +204,7 @@ public class {Entity}AppService_Tests : ApplicationTestBase
 | Library | Purpose |
 |---------|---------|
 | FluentValidation | Input validation |
-| AutoMapper | Object mapping |
+| Mapperly | Object mapping |
 | xUnit | Testing |
 | Shouldly | Assertions |
 | NSubstitute | Mocking |

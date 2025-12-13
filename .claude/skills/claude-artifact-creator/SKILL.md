@@ -213,6 +213,31 @@ When agents grow >150 lines:
 | CLI commands | Command | "Use `/command-name`" |
 | Project structure | docs/ | "Read docs/..." |
 
+## Agent Optimization Patterns
+
+For comprehensive agent optimization, see [agent-optimization-patterns.md](references/agent-optimization-patterns.md).
+
+**Key techniques:**
+
+| Technique | Purpose |
+|-----------|---------|
+| **Semantic skill categorization** | Organize skills by METHODOLOGY, DOMAIN, LENS, OUTPUT |
+| **Explicit workflow pipeline** | Declarative `GATHER → ANALYZE → REPORT` in frontmatter |
+| **Skill invocation guidance** | Phase-to-skill mapping with fallback checks |
+| **Project-agnostic design** | Dynamic context loading from docs/ |
+| **Output externalization** | Dedicated format skill for report templates |
+
+**Quick optimization checklist:**
+```
+- [ ] Skills categorized semantically (not alphabetically)
+- [ ] Workflow defined as pipeline with phase-to-skill mapping
+- [ ] Fallback checks provided for skill failures
+- [ ] No hardcoded project names/paths
+- [ ] Output template in dedicated skill
+- [ ] Quality self-check categorized by concern
+- [ ] Agent size <150 lines
+```
+
 ## Success Metrics
 
 Track these for artifact quality:
@@ -269,6 +294,7 @@ Rule: "Knowing" = Skill, "Doing" = Command
 - [references/commands/command-patterns.md](references/commands/command-patterns.md) - Patterns
 - [references/anti-patterns.md](references/anti-patterns.md) - What to avoid
 - [references/agent-refactoring-guide.md](references/agent-refactoring-guide.md) - Extract from agents
+- [references/agent-optimization-patterns.md](references/agent-optimization-patterns.md) - **Advanced optimization techniques** (skill categorization, workflow pipelines, fallback patterns)
 
 **Project Context:**
 - `CLAUDE.md` - Project-specific values and quick references

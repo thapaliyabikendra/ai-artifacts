@@ -312,15 +312,67 @@ public async Task<PatientDto> CreateAsync(CreatePatientDto input)
 }
 ```
 
+## Mapping Validation Patterns
+
+### Common Bug: Copy-Paste Property Mapping
+
+Manual mappings (especially in `select new` clauses) are prone to copy-paste errors:
+
+```csharp
+// ❌ BUG: Wrong property copied - IsPutawayCompleted mapped from wrong source!
+select new LicensePlateDto()
+{
+    IsInboundQCChecklistCompleted = lc.IsInboundQCChecklistCompleted,
+    IsPutawayCompleted = lc.IsInboundQCChecklistCompleted,  // BUG! Should be lc.IsPutawayCompleted
+    IsHold = lc.IsHold
+}
+
+// ✅ CORRECT: Use Mapperly to prevent copy-paste errors
+[Mapper]
+public partial class LicensePlateMapper
+{
+    public partial LicensePlateDto ToDto(LicensePlate entity);
+}
+
+// Or if manual mapping is required, double-check similar-named properties
+select new LicensePlateDto()
+{
+    IsInboundQCChecklistCompleted = lc.IsInboundQCChecklistCompleted,
+    IsPutawayCompleted = lc.IsPutawayCompleted,  // ✅ Correct property
+    IsHold = lc.IsHold
+}
+```
+
+### Manual Mapping Checklist
+
+When manual mapping is unavoidable (e.g., complex projections), verify:
+
+- [ ] Each DTO property maps to the **correct** entity property
+- [ ] Similar-named properties double-checked (e.g., `IsXxxCompleted` vs `IsYyyCompleted`)
+- [ ] Null checks on optional navigation properties
+- [ ] No copy-paste from adjacent lines without modification
+
+### High-Risk Property Patterns
+
+Be extra careful with these patterns that look similar:
+
+| DTO Property | Wrong Source | Correct Source |
+|--------------|--------------|----------------|
+| `IsPutawayCompleted` | `entity.IsInboundCompleted` | `entity.IsPutawayCompleted` |
+| `UpdatedAt` | `entity.CreatedAt` | `entity.LastModificationTime` |
+| `CustomerName` | `entity.ShipperName` | `entity.CustomerName` |
+| `TargetDate` | `entity.SourceDate` | `entity.TargetDate` |
+
 ## Best Practices
 
 1. **Thin AppServices** - Orchestrate, don't implement business logic
 2. **Delegate to Domain** - Use domain services for complex rules
-3. **Use Mapperly** - Source-generated mapping for performance
+3. **Use Mapperly** - Source-generated mapping for performance (prevents copy-paste bugs)
 4. **WhereIf pattern** - Clean optional filtering
 5. **Structured logging** - Consistent format for tracing
 6. **Input sanitization** - Trim and normalize inputs
 7. **Authorization** - Always check permissions
+8. **Verify manual mappings** - Double-check similar-named property assignments
 
 ## Related Skills
 

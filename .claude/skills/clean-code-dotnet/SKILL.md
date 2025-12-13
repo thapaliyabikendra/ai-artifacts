@@ -411,6 +411,53 @@ class Manager
 }
 ```
 
+### Constructor Dependency Smell (SRP Indicator)
+
+Too many constructor dependencies indicate SRP violation:
+
+```csharp
+// ❌ Code Smell: 15 dependencies = too many responsibilities!
+public class LicensePlateAppService : ApplicationService
+{
+    public LicensePlateAppService(
+        IRepository<LicensePlate, Guid> licensePlateRepository,
+        IRepository<LicensePlateWithoutTag, Guid> licensePlateWithoutTagRepository,
+        IRepository<ASN, Guid> asnRepository,
+        IRepository<Project, Guid> projectRepository,
+        IRepository<Tag, Guid> tagRepository,
+        IRepository<SKU, Guid> skuRepository,
+        IRepository<Customer, Guid> customerRepository,
+        IRepository<LicensePlateHold, Guid> licensePlateHoldRepository,
+        IRepository<LicensePlateLocation, Guid> licensePlateLocationRepository,
+        IRepository<Location, Guid> locationRepository,
+        IWarehouseAppService warehouseAppService,
+        IWarehouseOwnerAppService warehouseOwnerAppService,
+        IBlobContainer<BulkUpdateLPExcelFileContainer> fileContainer,
+        LicensePlateService.LicensePlateServiceClient licensePlateServiceClient,
+        CommonDependencies<LicensePlateAppService> commonDependencies)
+    { }
+}
+
+// ✅ Good: Split by responsibility
+public class LicensePlateAppService { }      // CRUD only (~5 deps)
+public class LicensePlateBulkService { }     // Bulk imports (~4 deps)
+public class LicensePlateEventPublisher { }  // Events (~3 deps)
+```
+
+**Dependency Count Guidelines:**
+
+| Dependencies | Status | Action |
+|--------------|--------|--------|
+| 1-5 | ✅ Normal | Acceptable |
+| 6-8 | ⚠️ Warning | Review for splitting opportunities |
+| 9+ | ❌ Smell | Refactor required - class has too many responsibilities |
+
+**Refactoring Strategies:**
+1. **Extract Service** - Move related operations to a dedicated service
+2. **Facade Pattern** - Group related dependencies behind a facade
+3. **Domain Events** - Decouple via publish/subscribe instead of direct calls
+4. **Mediator Pattern** - Use MediatR to reduce direct dependencies
+
 ---
 
 ## Error Handling
@@ -530,7 +577,8 @@ hash = ((hash << 5) - hash) + character;
 - [ ] **Functions**: Single responsibility, <3 args, no flags
 - [ ] **Variables**: No magic strings, early returns, no nesting >2
 - [ ] **SOLID**: Interfaces over concrete, small focused classes
-- [ ] **Error Handling**: No `throw ex`, no silent catch
+- [ ] **Dependencies**: Constructor has <8 dependencies (SRP indicator)
+- [ ] **Error Handling**: No `throw ex`, no silent catch, specific exception types
 - [ ] **Comments**: No regions, no dead code, explains WHY
 
 ---

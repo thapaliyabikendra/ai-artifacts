@@ -446,6 +446,68 @@ public async Task<List<DoctorAvailabilityDto>> GetDoctorAvailabilityAsync(DateTi
 | Large OFFSET pagination | Slow for large offsets | Use cursor-based pagination |
 | `Count()` after `ToList()` | Loads all data | Use `CountAsync()` |
 | Multiple `SaveChangesAsync()` | Multiple transactions | Batch changes |
+| **`Count()` after pagination** | Double query execution | Count BEFORE `ToListAsync()` |
+| **`GetListAsync()` for validation** | Loads entire table | Use filtered `AnyAsync()` or `GetQueryableAsync()` |
+| **In-memory joins for bulk ops** | Memory explosion | Use `IQueryable` joins, filter server-side |
+
+### Critical: Count After Pagination (Double Query)
+
+```csharp
+// ❌ BAD: Executes query TWICE (one for data, one for count)
+var dtos = await AsyncExecuter.ToListAsync(
+    queryable
+    .OrderBy(input.Sorting)
+    .Skip(input.SkipCount)
+    .Take(input.MaxResultCount)
+);
+var totalCount = queryable.Count(); // Second execution on same queryable!
+
+// ✅ GOOD: Count FIRST, then paginate
+var totalCount = await AsyncExecuter.CountAsync(queryable);
+var dtos = await AsyncExecuter.ToListAsync(
+    queryable
+    .OrderBy(input.Sorting)
+    .Skip(input.SkipCount)
+    .Take(input.MaxResultCount)
+);
+```
+
+### Critical: Loading Full Tables for Validation
+
+```csharp
+// ❌ BAD: Loads ALL records to memory for validation
+var _projects = await _projectRepository.GetListAsync();
+var _customers = await _customerRepository.GetListAsync();
+var _licensePlates = await _licensePlateRepository.GetListAsync();
+
+// Then validates with in-memory LINQ
+foreach (var item in input)
+{
+    var project = _projects.FirstOrDefault(p => p.Code == item.ProjectCode);
+    // ...
+}
+
+// ✅ GOOD: Only load what you need based on input
+var projectCodes = input.Select(x => x.ProjectCode).Distinct().ToList();
+var customerNames = input.Select(x => x.CustomerName).Distinct().ToList();
+
+var projects = await (await _projectRepository.GetQueryableAsync())
+    .Where(p => projectCodes.Contains(p.ProjectCode))
+    .ToDictionaryAsync(p => p.ProjectCode, p => p);
+
+var customers = await (await _customerRepository.GetQueryableAsync())
+    .Where(c => customerNames.Contains(c.CustomerName))
+    .ToDictionaryAsync(c => c.CustomerName, c => c);
+
+// Validate using dictionaries (O(1) lookup)
+foreach (var item in input)
+{
+    if (!projects.TryGetValue(item.ProjectCode, out var project))
+    {
+        validations.Add($"Invalid project code: {item.ProjectCode}");
+    }
+}
+```
 
 ## Performance Checklist
 

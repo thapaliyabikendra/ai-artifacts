@@ -673,6 +673,18 @@ Before implementation, read:
 | Repeated content across agents | Duplication, inconsistency | Create shared skill |
 | Project-specific paths in agent | Not portable | Move to `docs/project-context.md` |
 
+### Agent Optimization Patterns
+
+For advanced optimization techniques (skill categorization, workflow pipelines, skill invocation guidance, fallback patterns), see:
+
+**[`.claude/skills/claude-artifact-creator/references/agent-optimization-patterns.md`](.claude/skills/claude-artifact-creator/references/agent-optimization-patterns.md)**
+
+Key techniques:
+- **Semantic skill categorization** - Organize by METHODOLOGY, DOMAIN, LENS, OUTPUT
+- **Explicit workflow pipeline** - Declarative phase-to-skill mapping
+- **Skill invocation guidance** - Explicit instructions with fallback checks
+- **Project-agnostic design** - Dynamic context loading
+
 ---
 
 ## Artifact Portability Rules
