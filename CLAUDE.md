@@ -94,7 +94,7 @@ Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-Q
 
 **Usage**: `Use the abp-developer agent to implement the Patient service`
 
-## Available Skills (34)
+## Available Skills (35)
 
 Located in `.claude/skills/` organized by topic:
 
@@ -108,11 +108,11 @@ Located in `.claude/skills/` organized by topic:
 | **Security** | 1 | security-patterns |
 | **Frontend** | 3 | react-development-patterns, typescript-advanced-types, modern-javascript-patterns |
 | **DevOps** | 2 | docker-dotnet-containerize, git-advanced-workflows |
-| **Meta** | 3 | claude-artifact-creator, feature-development-workflow, knowledge-discovery |
+| **Meta** | 4 | claude-artifact-creator, feature-development-workflow, knowledge-discovery, markdown-optimization |
 
 Skills are auto-triggered based on context. For ABP patterns, use `abp-framework-patterns` for overview or the focused skills: `abp-entity-patterns` (domain), `abp-service-patterns` (application), `abp-infrastructure-patterns` (cross-cutting).
 
-## Available Commands (15)
+## Available Commands (16)
 
 Located in `.claude/commands/` organized by action. Full reference: [.claude/COMMAND-INDEX.md](.claude/COMMAND-INDEX.md)
 
@@ -136,6 +136,7 @@ Located in `.claude/commands/` organized by action. Full reference: [.claude/COM
 | Explain code | `/explain:code-explain <file>` |
 | Generate docs | `/generate:doc-generate <target>` |
 | API mocks | `/generate:api-mock <spec>` |
+| Optimize markdown | `/docs:optimize-md <path> [--profile <type>]` |
 
 Commands use reference templates in `.claude/commands/references/` for detailed patterns.
 

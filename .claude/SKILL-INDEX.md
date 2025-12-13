@@ -36,6 +36,9 @@ Discovery index for finding the right skill. Like Context7's `resolve-library-id
 | Distributed events | `distributed-events-advanced` | `abp-framework-patterns` |
 | gRPC services | `grpc-integration-patterns` | - |
 | API responses | `api-response-patterns` | `api-design-principles` |
+| Optimize markdown docs | `markdown-optimization` | - |
+| Reduce doc size | `markdown-optimization` | - |
+| Compaction patterns | `markdown-optimization` | - |
 
 ## Quick Lookup by Keyword
 
@@ -98,6 +101,12 @@ Discovery index for finding the right skill. Like Context7's `resolve-library-id
 | `Saga` | distributed-events-advanced | - |
 | `gRPC` | grpc-integration-patterns | - |
 | `Protobuf` | grpc-integration-patterns | - |
+| `markdown` | markdown-optimization | - |
+| `CLAUDE.md` | markdown-optimization | - |
+| `docs/` | markdown-optimization | - |
+| `compaction` | markdown-optimization | - |
+| `verbose` | markdown-optimization | clean-code-dotnet |
+| `TOC` | markdown-optimization | - |
 
 ## Quick Lookup by Error Message
 
@@ -191,6 +200,7 @@ Discovery index for finding the right skill. Like Context7's `resolve-library-id
 | `claude-artifact-creator` | Create skills, agents, commands |
 | `feature-development-workflow` | End-to-end feature orchestration |
 | `knowledge-discovery` | Find relevant skills and knowledge for tasks |
+| `markdown-optimization` | Analyze and optimize markdown docs for size/structure |
 
 ## Skill Bundles
 

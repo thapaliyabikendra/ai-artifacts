@@ -1,6 +1,6 @@
 # Command Index
 
-Centralized command discovery. 25 commands organized by action.
+Centralized command discovery. 26 commands organized by action.
 
 ## Quick Lookup by Task
 
@@ -31,6 +31,7 @@ Centralized command discovery. 25 commands organized by action.
 | Create ADR | `/arch:adr` | `<title> [--number N]` |
 | Create system design | `/arch:system-design` | `<feature> [--scope module\|system]` |
 | Design API contract | `/arch:api-contract` | `<resource> [--operations crud]` |
+| Optimize markdown docs | `/docs:optimize-md` | `<path> [--profile <type>] [--mode audit\|apply\|check]` |
 
 ## Commands by Category
 
@@ -103,6 +104,11 @@ Centralized command discovery. 25 commands organized by action.
 |---------|---------|-----------|
 | `/explain:code-explain` | Explain complex code | `<file-or-code>` |
 
+### Documentation Optimization
+| Command | Purpose | Arguments |
+|---------|---------|-----------|
+| `/docs:optimize-md` | Analyze and optimize markdown files | `<path> [--profile <type>] [--mode audit\|apply\|check] [--max-lines N]` |
+
 ---
 
 ## Command Bundles
@@ -166,6 +172,7 @@ Documentation and explanation commands.
 | `/generate:doc-generate` | Auto-generate docs |
 | `/explain:code-explain` | Code explanation |
 | `/generate:api-mock` | API mock generation |
+| `/docs:optimize-md` | Markdown optimization |
 
 ---
 
@@ -229,7 +236,11 @@ What do you need?
 │   ├─ GitHub issue → /team:issue
 │   └─ Standup notes → /team:standup-notes
 │
-└─ Understand code? → /explain:code-explain
+├─ Understand code? → /explain:code-explain
+│
+└─ Optimize documentation?
+    ├─ Markdown files → /docs:optimize-md
+    └─ Guidelines → /optimize-guidelines
 ```
 
 ## Argument Patterns
