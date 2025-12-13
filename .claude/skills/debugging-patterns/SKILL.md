@@ -264,5 +264,5 @@ dotnet test --filter "FullyQualifiedName~PatientAppService_Tests"
 
 This skill is used by:
 - **debugger**: Root cause analysis and diagnosis
-- **code-reviewer**: Identifying potential issues in PRs
+- **abp-code-reviewer**: Identifying potential issues in backend PRs
 - **abp-developer**: Fixing bugs during implementation

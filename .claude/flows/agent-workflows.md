@@ -53,10 +53,10 @@ User Request: "Add invoice management feature"
          │
          ▼
 ┌─────────────────┐
-│  code-reviewer  │  Stage 5: REVIEW
+│abp-code-reviewer│  Stage 5: REVIEW
 │                 │  ─────────────────
 │ • Code quality  │  Outputs:
-│ • Patterns      │  • Review comments
+│ • ABP patterns  │  • Review comments
 │ • Best practices│  • Suggested improvements
 └────────┬────────┘
          │
@@ -128,7 +128,7 @@ Skip analysis phase for well-defined requirements.
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│security-engineer│ →  │  abp-developer  │ →  │  code-reviewer  │
+│security-engineer│ →  │  abp-developer  │ →  │abp-code-reviewer│
 │                 │    │                 │    │                 │
 │ Identify        │    │ Implement       │    │ Verify          │
 │ vulnerabilities │    │ fixes           │    │ implementation  │
@@ -168,7 +168,7 @@ Use the security-engineer agent to audit the authentication flow, then use abp-d
 
 ```
 ┌─────────────────┐    ┌─────────────────┐
-│  code-reviewer  │ →  │security-engineer│
+│abp-code-reviewer│ →  │security-engineer│
 │                 │    │                 │
 │ Quality review  │    │ Security review │
 └─────────────────┘    └─────────────────┘
@@ -180,7 +180,7 @@ Use the security-engineer agent to audit the authentication flow, then use abp-d
 
 ### Example
 ```
-Use the code-reviewer agent to review the PatientAppService changes, then use security-engineer for security audit
+Use the abp-code-reviewer agent to review the PatientAppService changes, then use security-engineer for security audit
 ```
 
 ---
@@ -189,7 +189,7 @@ Use the code-reviewer agent to review the PatientAppService changes, then use se
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   qa-engineer   │ →  │  abp-developer  │ →  │  code-reviewer  │
+│   qa-engineer   │ →  │  abp-developer  │ →  │abp-code-reviewer│
 │                 │    │                 │    │                 │
 │ Write failing   │    │ Implement to    │    │ Review          │
 │ tests (RED)     │    │ pass (GREEN)    │    │ (REFACTOR)      │

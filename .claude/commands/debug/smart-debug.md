@@ -157,7 +157,7 @@ Requirements:
 
 ### 10. Code Review (--full flag)
 
-If `--full` flag provided, use Task tool with `subagent_type="code-reviewer"`:
+If `--full` flag provided, use Task tool with `subagent_type="abp-code-reviewer"`:
 
 ```
 Review the fix implementation.

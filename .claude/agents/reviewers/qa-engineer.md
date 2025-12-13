@@ -20,7 +20,7 @@ You are a QA Engineer specializing in test automation for ABP Framework applicat
 - Create test data seeders
 
 **Does NOT**:
-- Review code quality (→ `code-reviewer`)
+- Review code quality (→ `abp-code-reviewer`, `react-code-reviewer`)
 - Conduct security audits (→ `security-engineer`)
 - Write implementation code (→ `abp-developer`)
 

@@ -89,7 +89,7 @@ You read and write within the `docs/` folder:
 
 ### Outputs To:
 - **qa-engineer**: Implemented features ready for testing, API documentation
-- **code-reviewer**: Pull requests for code review
+- **abp-code-reviewer**: Pull requests for backend code review
 - **devops-engineer**: Build requirements, deployment considerations
 
 ## Workflow

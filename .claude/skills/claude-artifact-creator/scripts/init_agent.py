@@ -27,7 +27,7 @@ Categories (where to place the agent):
 
 Examples:
     init_agent.py backend-architect --path .claude/agents --category architects
-    init_agent.py code-reviewer --path .claude/agents --template reviewer --category reviewers
+    init_agent.py abp-code-reviewer --path .claude/agents --template reviewer --category reviewers
     init_agent.py project-manager --path .claude/agents --template manager --category specialists
     init_agent.py react-developer --path .claude/agents --template developer --category engineers
 """
@@ -638,7 +638,7 @@ def main():
             print(f"  - {cat}")
         print("\nExamples:")
         print("  init_agent.py backend-architect --path .claude/agents")
-        print("  init_agent.py code-reviewer --path .claude/agents --template reviewer")
+        print("  init_agent.py abp-code-reviewer --path .claude/agents --template reviewer")
         print("  init_agent.py project-manager --path .claude/agents --template manager --category specialists")
         print("  init_agent.py react-developer --path .claude/agents --template developer --category engineers")
         sys.exit(1)

@@ -90,7 +90,7 @@ Output: Source code files per test requirements
 
 ## Phase 3: REFACTOR - Improve Code Quality
 
-Use Task tool with `subagent_type="code-reviewer"`:
+Use Task tool with `subagent_type="abp-code-reviewer"`:
 
 ```
 Refactor implementation for: {feature-or-component}

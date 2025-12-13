@@ -358,5 +358,5 @@ var dtos = await _context.Patients
 
 This skill is used by:
 - **abp-developer**: Modern C# patterns in implementation
-- **code-reviewer**: Pattern validation during reviews
+- **abp-code-reviewer**: Pattern validation during reviews
 - **debugger**: Performance analysis and fixes

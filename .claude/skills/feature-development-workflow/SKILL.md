@@ -42,7 +42,7 @@ BA(reqs+rules) ───┘    (continues in background, non-blocking)
 | Test Data | `qa-engineer` | 🟢 ENTITY_READY | TestData.cs, Seeder.cs (parallel with Architect) |
 | Implement | `abp-developer` | 🟢 CONTRACTS_READY | Domain, Application, EF Core layers |
 | Tests | `qa-engineer` | 🟢 CONTRACTS_READY | Unit tests (parallel with Developer) |
-| Review | `code-reviewer` | Phase 2 complete | Review report (optional) |
+| Review | `abp-code-reviewer` | Phase 2 complete | Review report (optional) |
 | Security | `security-engineer` | Phase 2 complete | Security audit (optional) |
 
 ## Parallelism Optimizations

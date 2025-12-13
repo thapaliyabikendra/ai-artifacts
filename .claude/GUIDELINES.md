@@ -450,7 +450,7 @@ Claude Code includes two built-in subagents:
 | Folder | Purpose | Examples |
 |--------|---------|----------|
 | `architects/` | Design systems, plan implementations | backend-architect, business-analyst |
-| `reviewers/` | Analyze and critique code | code-reviewer, security-engineer |
+| `reviewers/` | Analyze and critique code | abp-code-reviewer, react-code-reviewer, security-engineer |
 | `engineers/` | Build and implement solutions | abp-developer, react-developer |
 | `specialists/` | Deep domain expertise | debugger |
 
@@ -1226,7 +1226,8 @@ Before sharing a skill:
 ### Good Organization
 
 ```
-agents/reviewers/code-reviewer.md      # Role-based
+agents/reviewers/abp-code-reviewer.md  # Role-based (backend)
+agents/reviewers/react-code-reviewer.md # Role-based (frontend)
 commands/review/code-review.md         # Action-based, references agent
 skills/code-review-excellence/         # Knowledge domain with resources
 hooks/auto-format.py                   # Deterministic formatting
@@ -1236,7 +1237,7 @@ hooks/auto-format.py                   # Deterministic formatting
 
 ```
 agents/code-review-workflow/           # Workflow-based (wrong)
-commands/code-reviewer/                # Role-based folder (wrong)
+commands/abp-code-reviewer/            # Role-based folder (wrong)
 skills/utils.md                        # Too vague (wrong)
 ```
 

@@ -7,7 +7,7 @@ Agents are organized by role (what they ARE) into the following categories.
 | Category | Purpose | Examples |
 |----------|---------|----------|
 | `architects/` | Design systems, plan implementations | backend-architect, business-analyst |
-| `reviewers/` | Analyze and critique | code-reviewer, security-engineer, qa-engineer |
+| `reviewers/` | Analyze and critique | abp-code-reviewer, react-code-reviewer, security-engineer, qa-engineer |
 | `engineers/` | Build and implement | abp-developer, react-developer, devops-engineer |
 | `specialists/` | Deep domain expertise | debugger |
 
@@ -52,7 +52,8 @@ Does it have deep domain expertise? → specialists/
 **Typical Tools:** `Read, Glob, Grep`
 
 **Examples:**
-- `code-reviewer` - Code quality, patterns, best practices
+- `abp-code-reviewer` - Backend code quality, ABP patterns
+- `react-code-reviewer` - Frontend code quality, React patterns
 - `security-engineer` - Security audits, STRIDE, OWASP
 - `qa-engineer` - Test coverage, quality validation
 

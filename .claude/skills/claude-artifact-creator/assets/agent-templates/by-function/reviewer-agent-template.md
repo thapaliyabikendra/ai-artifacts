@@ -226,7 +226,7 @@ Focus: Efficiency, resource usage, optimization opportunities
 
 **Date**: 2025-12-11
 **Scope**: Patient CRUD API implementation
-**Reviewer**: code-reviewer
+**Reviewer**: abp-code-reviewer
 
 ---
 

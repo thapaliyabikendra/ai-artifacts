@@ -100,7 +100,7 @@ Stage 4: Sequential testing and release
 | Frontend code | react-developer | Read, Write, Edit, Bash |
 | Testing | qa-engineer | Read, Write, Edit, Bash |
 | Security audit | security-engineer | Read, Grep, Glob |
-| Code review | code-reviewer | Read, Grep, Glob |
+| Code review | abp-code-reviewer | Read, Grep, Glob |
 | CI/CD & deployment | devops-engineer | Read, Write, Edit, Bash |
 
 ## Output Format
@@ -365,7 +365,7 @@ Execution Plan:
 │ Phase 3: Quality (Parallel)           │
 ├────────────────────────────────────────┤
 │ • qa-engineer: Create tests           │
-│ • code-reviewer: Review code          │
+│ • abp-code-reviewer: Review code      │
 │   Duration: 1 hour                     │
 └────────────────────────────────────────┘
              │

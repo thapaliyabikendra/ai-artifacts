@@ -57,7 +57,7 @@ Consolidation: Combined analysis report with recommendations
 **2. Pre-Implementation Review**
 ```
 Orchestrator spawns:
-├── code-reviewer       → Reviews existing patterns
+├── abp-code-reviewer   → Reviews existing backend patterns
 ├── security-engineer   → Checks for vulnerabilities
 └── qa-engineer        → Analyzes test coverage
 
@@ -169,13 +169,13 @@ Consolidation: Complete system architecture map
 3. qa-engineer         → Verifies fix and adds regression test
    └─► Writes: Test cases
 
-4. code-reviewer       → Reviews changes for quality
+4. abp-code-reviewer   → Reviews changes for quality
    └─► Writes: Review report
 ```
 
 **3. Documentation Update Pipeline**
 ```
-1. code-reviewer       → Analyzes recent changes
+1. abp-code-reviewer   → Analyzes recent changes
    └─► Identifies undocumented features
 
 2. backend-architect   → Updates technical specs

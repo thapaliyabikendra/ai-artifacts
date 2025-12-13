@@ -57,7 +57,7 @@ python scripts/init_skill.py pdf-processor --path .claude/skills --template tool
 
 **Create an agent:**
 ```bash
-python scripts/init_agent.py code-reviewer --path .claude/agents --template reviewer --category reviewers
+python scripts/init_agent.py abp-code-reviewer --path .claude/agents --template reviewer --category reviewers
 ```
 
 **Create a command:**

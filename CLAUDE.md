@@ -6,7 +6,18 @@ Guidance for Claude Code when working with this repository.
 
 **Clinic Management System** - A layered monolith built on ABP Framework using Domain Driven Design. Manages patients, appointments, and doctor schedules.
 
-**Tech Stack**: .NET 10, ABP Framework 10.0.1, Entity Framework Core, PostgreSQL, Redis, OpenIddict
+**Tech Stack**
+
+| Component | Technology |
+|-----------|------------|
+| Runtime | .NET 10 |
+| Framework | ABP Framework 10.0.1 |
+| Database | PostgreSQL |
+| ORM | Entity Framework Core |
+| Auth | OpenIddict (OAuth 2.0) |
+| Mapping | Mapperly (NOT AutoMapper) |
+| Validation | FluentValidation (NOT data annotations) |
+| Testing | xUnit + Shouldly + NSubstitute |
 
 ## Quick Reference
 
@@ -52,7 +63,7 @@ For choosing between Agents, Skills, Commands, and Hooks, see **[.claude/GUIDELI
 
 **For full Knowledge Discovery Protocol**: See [GUIDELINES.md](.claude/GUIDELINES.md#knowledge-architecture).
 
-## Available Agents (10)
+## Available Agents (11)
 
 Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-QUICK-REF.md](.claude/AGENT-QUICK-REF.md)
 
@@ -64,7 +75,8 @@ Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-Q
 | Design API/schema | `backend-architect` |
 | Implement .NET/ABP | `abp-developer` |
 | Implement React | `react-developer` |
-| Review code | `code-reviewer` |
+| Review backend code | `abp-code-reviewer` |
+| Review frontend code | `react-code-reviewer` |
 | Security audit | `security-engineer` |
 | Write tests | `qa-engineer` |
 | Debug errors | `debugger` |
@@ -75,8 +87,9 @@ Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-Q
 
 | Workflow | Chain |
 |----------|-------|
-| Feature (full) | `business-analyst` → `backend-architect` → `abp-developer` → `qa-engineer` → `code-reviewer` |
+| Feature (full) | `business-analyst` → `backend-architect` → `abp-developer` → `qa-engineer` → `abp-code-reviewer` |
 | Feature (fast) | `backend-architect` → `abp-developer` → `qa-engineer` |
+| Full-stack | `backend-architect` → [`abp-developer`, `react-developer`] → `qa-engineer` → [`abp-code-reviewer`, `react-code-reviewer`] |
 | Bug fix | `debugger` → `abp-developer` → `qa-engineer` |
 
 **Usage**: `Use the abp-developer agent to implement the Patient service`

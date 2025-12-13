@@ -213,7 +213,7 @@ Backend development essentials for .NET/ABP applications.
 | `error-handling-patterns` | Exception handling, Polly |
 | `clean-code-dotnet` | SOLID, naming, code smells |
 
-**Used by**: `abp-developer`, `backend-architect`, `code-reviewer`
+**Used by**: `abp-developer`, `backend-architect`, `abp-code-reviewer`
 
 ### frontend-core
 Frontend development for React/TypeScript applications.

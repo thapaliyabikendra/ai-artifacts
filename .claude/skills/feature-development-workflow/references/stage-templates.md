@@ -191,7 +191,7 @@ Create test files using paths from project-context.md:
 
 ## Stage 5: Code Review (Optional)
 
-**Agent**: `code-reviewer`
+**Agent**: `abp-code-reviewer`
 
 ### Prompt Template
 

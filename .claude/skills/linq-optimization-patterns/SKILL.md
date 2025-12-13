@@ -483,5 +483,5 @@ _logger.LogInformation("Generated SQL: {Sql}", sql);
 
 This skill is used by:
 - **abp-developer**: Efficient data access implementation
-- **code-reviewer**: Query performance validation
+- **abp-code-reviewer**: Query performance validation
 - **debugger**: Performance issue diagnosis

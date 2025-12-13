@@ -175,9 +175,9 @@ Commands that orchestrate specialized agents:
 
 | Command | Agents Used | Models |
 |---------|-------------|--------|
-| `/feature:add-feature` | business-analyst → backend-architect → abp-developer → qa-engineer → code-reviewer → security-engineer | haiku → haiku → sonnet → haiku → haiku → haiku |
-| `/debug:smart-debug` | debugger → abp-developer → qa-engineer → code-reviewer | sonnet → sonnet → haiku → haiku |
-| `/tdd:tdd-cycle` | qa-engineer → abp-developer → code-reviewer | sonnet → sonnet → haiku |
+| `/feature:add-feature` | business-analyst → backend-architect → abp-developer → qa-engineer → abp-code-reviewer → security-engineer | haiku → haiku → sonnet → haiku → haiku → haiku |
+| `/debug:smart-debug` | debugger → abp-developer → qa-engineer → abp-code-reviewer | sonnet → sonnet → haiku → haiku |
+| `/tdd:tdd-cycle` | qa-engineer → abp-developer → abp-code-reviewer | sonnet → sonnet → haiku |
 | `/generate:entity` | abp-developer | sonnet |
 | `/generate:migration` | database-migrator | sonnet |
 

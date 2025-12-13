@@ -504,5 +504,5 @@ For foundational patterns, see the shared knowledge base:
 
 This skill is used by:
 - **abp-developer**: DTO validator implementation
-- **code-reviewer**: Validation pattern review
+- **abp-code-reviewer**: Validation pattern review
 - **/generate:entity**: Validator scaffolding

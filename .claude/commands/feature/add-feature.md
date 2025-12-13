@@ -41,7 +41,7 @@ default:       BA(entity+perms) ─┬──→ [backend-architect + qa-data] �
                                  │
                BA(reqs+rules) ───┘    (continues in background, non-blocking)
 
---full-review: [default] ──→ [code-reviewer + security-engineer]
+--full-review: [default] ──→ [abp-code-reviewer + security-engineer]
 ```
 
 **Parallelism Gains**:
@@ -310,9 +310,9 @@ Run default mode, then add review phase.
 
 Launch BOTH agents simultaneously:
 
-**Agent A** - Task with `subagent_type="code-reviewer"`, `model="haiku"`:
+**Agent A** - Task with `subagent_type="abp-code-reviewer"`, `model="haiku"`:
 ```
-Review {feature-name} implementation. Be CONCISE.
+Review {feature-name} backend implementation. Be CONCISE.
 
 Input: All source code from Phase 2
 Output: docs/features/{feature-name}/review-report.md (max 50 lines)
