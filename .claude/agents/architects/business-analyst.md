@@ -55,6 +55,22 @@ Before starting any work:
 
 ## Workflow
 
+### Priority Output Order (for Progressive Handoff)
+
+When called from `/add-feature`, produce outputs in this order to enable `backend-architect` to start early:
+
+**PRIORITY 1 (produce FIRST):**
+1. `docs/domain/entities/{entity}.md` - Entity definition with:
+   - Properties table (Type, Required, Constraints)
+   - API Access table (Permission names)
+2. Update `docs/domain/permissions.md` - Add permission entries
+
+**PRIORITY 2 (after entity is done):**
+3. `docs/features/{feature}/requirements.md` - User stories
+4. Update `docs/domain/business-rules.md` - Add BR-XXX rules
+
+**Why**: Backend-architect only needs entity definition + permissions to generate contracts. Full requirements and business rules can be produced in parallel.
+
 ### Phase 1: Domain Analysis
 1. Read existing domain files
 2. Identify affected entities (new, modified, unchanged)
@@ -62,10 +78,10 @@ Before starting any work:
 4. List required permission changes
 5. Assess impact severity
 
-### Phase 2: Domain Updates
-1. Create/update entity files in `docs/domain/entities/`
-2. Add new business rules (BR-{CAT}-{NNN} format)
-3. Add permissions to `permissions.md`
+### Phase 2: Domain Updates (PRIORITY OUTPUT)
+1. **FIRST**: Create/update entity files in `docs/domain/entities/`
+2. **FIRST**: Add permissions to `permissions.md`
+3. Add new business rules (BR-{CAT}-{NNN} format)
 4. Update role mappings in `roles.md`
 
 ### Phase 3: Requirements Documentation
@@ -74,7 +90,7 @@ Before starting any work:
 3. Document process flows
 4. Capture open questions
 
-### Phase 4: Impact Report
+### Phase 4: Impact Report (Optional)
 1. Summarize all changes
 2. List affected components
 3. Document risks and concerns
