@@ -38,16 +38,19 @@ Check for common issues:
 
 Different document types have different optimization rules.
 
-| Profile | Target | Max Lines | Key Focus |
-|---------|--------|-----------|-----------|
-| `claude-md` | Project context | 300 | Concise, table-heavy |
-| `architecture` | System design | 500 | Diagrams external, decisions linked |
-| `domain` | Business docs | 400 | Entity tables, numbered rules |
-| `feature-spec` | Feature docs | 600 | Separated concerns |
-| `readme` | Entry points | 200 | Quick start, links |
-| `skill` | Skill docs | 500 | Progressive disclosure |
-| `agent` | Agent prompts | 150 | Lean, skill references |
-| `generic` | Other markdown | 500 | General best practices |
+> **Authoritative limits**: For Claude Code artifacts (`agent`, `skill`, `command`, `guidelines`), size limits are defined in [GUIDELINES.md](../../GUIDELINES.md#size-limits). This skill enforces those limits.
+
+| Profile | Target | Key Focus |
+|---------|--------|-----------|
+| `claude-md` | Project context | Concise, table-heavy |
+| `architecture` | System design | Diagrams external, decisions linked |
+| `domain` | Business docs | Entity tables, numbered rules |
+| `feature-spec` | Feature docs | Separated concerns |
+| `readme` | Entry points | Quick start, links |
+| `agent` | Agent prompts | Lean, reference skills |
+| `skill` | Skill docs | Progressive disclosure |
+| `command` | Slash commands | Focused action |
+| `guidelines` | Meta-knowledge | Modular structure |
 
 **Full profile definitions**: See [profiles.md](references/profiles.md)
 
@@ -266,6 +269,6 @@ This skill supports:
 
 ## Related
 
-- [Profile Definitions](references/profiles.md)
-- [Compaction Patterns](references/compaction-patterns.md)
-- [GUIDELINES.md](../../GUIDELINES.md) - Guidelines optimization reference
+- [GUIDELINES.md](../../GUIDELINES.md) - **Authoritative source** for artifact size limits and quality standards
+- [Profile Definitions](references/profiles.md) - Detection patterns and optimization rules per profile
+- [Compaction Patterns](references/compaction-patterns.md) - Techniques for reducing verbosity

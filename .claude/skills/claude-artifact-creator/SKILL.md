@@ -82,11 +82,10 @@ Level 3: references/ → On-demand deep dives
 ```
 
 ### 3. Artifact Limits
-```
-Skill SKILL.md: <500 lines
-Agent prompt: <150 lines
-References: One level deep (no nested)
-```
+
+See [GUIDELINES.md § Size Limits](../../GUIDELINES.md#size-limits) for authoritative limits.
+
+**Quick reference**: Skills <500, Agents <150, References one level deep.
 
 ### 4. Description Pattern
 ```yaml
@@ -110,14 +109,9 @@ description: I can help you with documents
 
 ## Decision Flowchart
 
-**Quick Reference:**
-```
-User triggers explicitly → COMMAND
-Claude auto-detects → SKILL (no isolation) or AGENT (with isolation)
-Deterministic on events → HOOK
-```
+See [GUIDELINES.md § Choosing the Right Tool](../../GUIDELINES.md#choosing-the-right-tool) for the full decision matrix.
 
-**Full decision tree**: See [GUIDELINES.md § Choosing the Right Tool](../../GUIDELINES.md#choosing-the-right-tool)
+**Quick reference**: Command (user triggers) → Skill (auto, no isolation) → Agent (auto, isolated) → Hook (deterministic events)
 
 ## Creation Workflow
 
@@ -247,19 +241,13 @@ Track these for artifact quality:
 
 ## Quality Checklist
 
-```
-Artifact Quality Review:
+See [GUIDELINES.md § Quality Checklists](../../GUIDELINES.md#quality-checklists) for authoritative checklists.
+
+**Quick validation**:
 - [ ] Description: third-person, 100-1024 chars, 3+ triggers
 - [ ] Name: lowercase, hyphens, max 64 chars
-- [ ] Entry point clear (user knows where to start)
-- [ ] Concrete examples, not just descriptions
-- [ ] No duplicate content across files
-- [ ] References one level deep only
+- [ ] Under line limits (per GUIDELINES.md)
 - [ ] Tested with Haiku, Sonnet, and Opus
-- [ ] Under line limits (Skills: 500, Agents: 150)
-- [ ] Validation/verification steps included
-- [ ] Error recovery guidance present
-```
 
 ## Integration Patterns
 

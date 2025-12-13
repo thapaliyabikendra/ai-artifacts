@@ -432,6 +432,7 @@ Or ask: "Create an agent for [purpose]" / "Create a skill for [domain]"
 |----------|-----------|
 | Agent | 150 |
 | SKILL.md | 500 |
+| Command | 200 |
 | Reference doc | 400 |
 | GUIDELINES.md | 1,000 |
 

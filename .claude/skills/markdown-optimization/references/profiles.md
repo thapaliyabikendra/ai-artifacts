@@ -2,6 +2,15 @@
 
 > Detailed profile definitions for markdown optimization. Each profile defines rules specific to a document type.
 
+## Authoritative Limits
+
+For Claude Code artifacts (`agent`, `skill`, `command`, `guidelines`), size limits are defined in [GUIDELINES.md](../../../GUIDELINES.md#size-limits). This file provides:
+- **Detection patterns** - How to auto-detect profile from path
+- **Optimization rules** - What to check and how to fix
+- **Expected structure** - Recommended document organization
+
+Limits here must match GUIDELINES.md. If they diverge, GUIDELINES.md is authoritative.
+
 ## Profile Detection
 
 Profiles are auto-detected from file paths:
@@ -256,11 +265,12 @@ docs/features/**               → feature-spec
 
 ### Constraints
 
-| Rule | Value | Rationale |
-|------|-------|-----------|
-| Max lines (SKILL.md) | 500 | Progressive disclosure |
-| Max section | 100 | Focused content |
-| Require TOC | No | References handle depth |
+> **Limits**: See [GUIDELINES.md § Skills](../../../GUIDELINES.md#skills) for authoritative limits (500 lines).
+
+| Rule | Rationale |
+|------|-----------|
+| Max section: 100 lines | Focused content |
+| Require TOC: No | References handle depth |
 
 ### Expected Structure
 
@@ -294,11 +304,12 @@ docs/features/**               → feature-spec
 
 ### Constraints
 
-| Rule | Value | Rationale |
-|------|-------|-----------|
-| Max lines | 150 | Lean coordinators |
-| Max section | 30 | Very concise |
-| Require TOC | No | Too short |
+> **Limits**: See [GUIDELINES.md § Agents](../../../GUIDELINES.md#agents) for authoritative limits (150 lines).
+
+| Rule | Rationale |
+|------|-----------|
+| Max section: 30 lines | Very concise |
+| Require TOC: No | Too short |
 
 ### Expected Structure
 
@@ -336,11 +347,12 @@ You are a [role].
 
 ### Constraints
 
-| Rule | Value | Rationale |
-|------|-------|-----------|
-| Max lines | 200 | Focused action |
-| Max section | 50 | Clear steps |
-| Require TOC | No | Usually short |
+> **Limits**: See [GUIDELINES.md § Commands](../../../GUIDELINES.md#commands) for authoritative format (200 lines recommended).
+
+| Rule | Rationale |
+|------|-----------|
+| Max section: 50 lines | Clear steps |
+| Require TOC: No | Usually short |
 
 ### Optimization Rules
 
@@ -358,15 +370,13 @@ You are a [role].
 
 ### Constraints
 
-| Document | Max Lines | Rationale |
-|----------|-----------|-----------|
-| GUIDELINES.md | 1,000 | Core reference, always loaded by artifact creator |
-| INDEX.md | 200 | Navigation hub only |
-| patterns/*.md | 400 | Focused design patterns |
-| standards/*.md | 400 | Rules & conventions |
-| examples/*.md | 500 | Good/bad examples with code |
-| workflows/*.md | 400 | How-to guides |
-| reference/*.md | 400 | Lookup tables |
+> **Limits**: See [GUIDELINES.md § Size Limits](../../../GUIDELINES.md#size-limits) for authoritative limits.
+
+| Document | Rationale |
+|----------|-----------|
+| GUIDELINES.md: 1,000 | Core reference, always loaded by artifact creator |
+| INDEX.md: 200 | Navigation hub only |
+| Sub-documents: 400-500 | Focused deep-dives |
 
 ### Expected Structure
 

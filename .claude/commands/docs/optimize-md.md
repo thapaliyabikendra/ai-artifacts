@@ -34,19 +34,19 @@ Analyze and optimize markdown files for maintainability, compaction, and structu
 
 ## Profiles
 
-Auto-detected from path. See [profiles.md](../../skills/markdown-optimization/references/profiles.md) for full definitions.
+Profiles are auto-detected from path. Apply `markdown-optimization` skill for full profile details.
 
-| Profile | Pattern | Max Lines |
-|---------|---------|-----------|
-| `claude-md` | `**/CLAUDE.md` | 300 |
-| `guidelines` | `.claude/GUIDELINES.md`, `.claude/guidelines/**` | Varies* |
-| `architecture` | `docs/architecture/**` | 500 |
-| `domain` | `docs/domain/**` | 400 |
-| `feature-spec` | `docs/features/**` | 600 |
-| `readme` | `**/README.md` | 200 |
-| `skill` | `.claude/skills/**` | 500 |
-| `agent` | `.claude/agents/**` | 150 |
+**Key limits** (from [GUIDELINES.md](../../GUIDELINES.md#size-limits)):
+
+| Profile | Max Lines |
+|---------|-----------|
+| `agent` | 150 |
+| `skill` | 500 |
+| `command` | 200 |
+| `guidelines` | 1,000 |
 | `generic` | Default | 500 |
+
+See [profiles.md](../../skills/markdown-optimization/references/profiles.md) for detection patterns and optimization rules.
 
 ## Context
 
