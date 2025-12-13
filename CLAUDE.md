@@ -63,7 +63,7 @@ For choosing between Agents, Skills, Commands, and Hooks, see **[.claude/GUIDELI
 
 **For full Knowledge Discovery Protocol**: See [GUIDELINES.md](.claude/GUIDELINES.md#knowledge-architecture).
 
-## Available Agents (11)
+## Available Agents
 
 Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-QUICK-REF.md](.claude/AGENT-QUICK-REF.md)
 
@@ -94,7 +94,7 @@ Located in `.claude/agents/` organized by role. Full reference: [.claude/AGENT-Q
 
 **Usage**: `Use the abp-developer agent to implement the Patient service`
 
-## Available Skills (35)
+## Available Skills
 
 Located in `.claude/skills/` organized by topic:
 
@@ -112,7 +112,7 @@ Located in `.claude/skills/` organized by topic:
 
 Skills are auto-triggered based on context. For ABP patterns, use `abp-framework-patterns` for overview or the focused skills: `abp-entity-patterns` (domain), `abp-service-patterns` (application), `abp-infrastructure-patterns` (cross-cutting).
 
-## Available Commands (16)
+## Available Commands
 
 Located in `.claude/commands/` organized by action. Full reference: [.claude/COMMAND-INDEX.md](.claude/COMMAND-INDEX.md)
 

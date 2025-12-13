@@ -262,8 +262,7 @@ profiles:
 ## Integration with Commands
 
 This skill supports:
-- `/docs:optimize-md` - Primary command
-- `/optimize-guidelines` - Specialized for GUIDELINES.md
+- `/docs:optimize-md` - Primary command (use `--profile guidelines` for GUIDELINES.md ecosystem)
 
 ## Related
 

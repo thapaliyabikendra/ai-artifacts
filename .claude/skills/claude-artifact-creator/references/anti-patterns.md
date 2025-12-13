@@ -2,21 +2,37 @@
 
 Common mistakes that reduce skill effectiveness. Avoid these patterns.
 
+## Table of Contents
+
+1. [Vague Trigger Descriptions](#1-vague-trigger-descriptions)
+2. [Abstract Instructions Without Examples](#2-abstract-instructions-without-examples)
+3. [Monolithic SKILL.md](#3-monolithic-skillmd)
+4. [Missing User Input Gathering](#4-missing-user-input-gathering)
+5. [Over-Engineering Simple Tasks](#5-over-engineering-simple-tasks)
+6. [Duplicate Content](#6-duplicate-content)
+7. [Kitchen Sink Skills](#7-kitchen-sink-skills)
+8. [Rigid Output Templates](#8-rigid-output-templates)
+9. [Missing Validation Phase](#9-missing-validation-phase)
+10. [Hardcoded Assumptions](#10-hardcoded-assumptions)
+11. [Inconsistent Naming Conventions](#11-inconsistent-naming-conventions)
+12. [Technology-Specific Assumptions](#12-technology-specific-assumptions)
+13. [Missing Trigger Info in Description](#13-missing-trigger-info-in-description)
+14. [No Clear Entry Point](#14-no-clear-entry-point)
+15. [Outdated References](#15-outdated-references)
+16. [No Error Recovery Guidance](#16-no-error-recovery-guidance)
+17. [Assuming Project Context](#17-assuming-project-context)
+
+---
+
 ## 1. Vague Trigger Descriptions
 
-The description is the primary mechanism for skill activation. Vague descriptions cause missed triggers or false activations.
+The description is the primary mechanism for skill activation.
 
-**Bad:**
-```yaml
-description: Helps with documents
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `description: Helps with documents` | `description: Create, edit, and analyze Word documents (.docx). Use when: (1) creating documents, (2) modifying .docx files, (3) extracting text/metadata.` |
 
-**Good:**
-```yaml
-description: Create, edit, and analyze Microsoft Word documents (.docx). Use when: (1) creating new documents from scratch, (2) modifying existing .docx files, (3) extracting text or metadata, (4) working with tracked changes or comments, (5) converting documents to other formats.
-```
-
-**Why it matters:** Claude scans descriptions to decide which skill to load. Specific trigger scenarios ensure the skill activates when needed.
+**Why**: Claude scans descriptions to decide which skill to load. Specific triggers ensure activation.
 
 ---
 
@@ -24,171 +40,71 @@ description: Create, edit, and analyze Microsoft Word documents (.docx). Use whe
 
 Describing what to do without showing how leads to inconsistent outputs.
 
-**Bad:**
-```markdown
-## Formatting Guidelines
-Format the output professionally with proper structure.
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "Format output professionally" | Show input/output example with concrete transformation |
 
-**Good:**
-```markdown
-## Formatting Guidelines
-
-**Example transformation:**
-
-Input: "Add error handling to the function"
-
-Output:
-```typescript
-try {
-  const result = await fetchData();
-  return result;
-} catch (error) {
-  logger.error('Failed to fetch data', { error });
-  throw new ApplicationError('DATA_FETCH_FAILED', error);
-}
-```
-
-Follow this pattern: wrap operations in try/catch, log with context, throw typed errors.
-```
-
-**Why it matters:** Examples communicate expectations more precisely than descriptions. Claude learns patterns from concrete instances.
+**Why**: Examples communicate expectations more precisely than descriptions.
 
 ---
 
 ## 3. Monolithic SKILL.md
 
-Cramming everything into SKILL.md wastes context window and makes navigation difficult.
+Cramming everything into SKILL.md wastes context window.
 
-**Bad:**
-```
-skill/
-├── SKILL.md (2000+ lines with everything)
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `SKILL.md (2000+ lines)` | `SKILL.md (~300 lines) + references/` |
 
-**Good:**
-```
-skill/
-├── SKILL.md (300 lines - core workflow + navigation)
-└── references/
-    ├── api-reference.md (detailed API docs)
-    ├── examples.md (comprehensive examples)
-    └── troubleshooting.md (edge cases)
-```
-
-**Why it matters:** SKILL.md loads entirely when triggered. Large files consume context needed for the actual task. References load on-demand.
+**Why**: SKILL.md loads entirely when triggered. Large files consume context needed for the task.
 
 ---
 
 ## 4. Missing User Input Gathering
 
-Jumping into execution without understanding scope leads to wasted effort and rework.
+Jumping into execution without understanding scope leads to wasted effort.
 
-**Bad:**
-```markdown
-## Refactoring Process
-1. Find all files with the pattern
-2. Apply the transformation
-3. Verify results
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| Start with "1. Find files, 2. Apply changes" | Start with "Before starting, clarify: Scope? Approach? Priority?" |
 
-**Good:**
-```markdown
-## User Input Required
-
-Before starting, clarify:
-1. **Scope**: Which directories/files to include?
-2. **Approach**: Aggressive refactoring or conservative changes?
-3. **Priority**: Start with specific components?
-
-## Refactoring Process
-[After gathering input...]
-```
-
-**Why it matters:** Assumptions about scope or approach can invalidate entire workflows. Upfront questions prevent costly backtracking.
+**Why**: Assumptions about scope can invalidate entire workflows.
 
 ---
 
 ## 5. Over-Engineering Simple Tasks
 
-Using scripts for tasks that are better as text instructions adds unnecessary complexity.
+Using scripts for tasks better as text instructions.
 
-**Bad:**
-```
-skill/
-├── SKILL.md
-└── scripts/
-    ├── format_text.py
-    ├── validate_format.py
-    └── apply_format.py
-```
-(For a skill that just formats commit messages)
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| 3 Python scripts for commit message formatting | Markdown template with examples |
 
-**Good:**
-```markdown
-## Commit Message Format
-
-Format: `type(scope): description`
-
-Types: feat, fix, docs, style, refactor, test, chore
-
-Examples:
-- `feat(auth): add OAuth2 support`
-- `fix(api): handle null response gracefully`
-```
-
-**Why it matters:** Scripts add maintenance burden and execution overhead. Text instructions are often sufficient and more flexible.
+**Why**: Scripts add maintenance burden. Text instructions are often sufficient.
 
 ---
 
 ## 6. Duplicate Content
 
-Same information in SKILL.md and references wastes tokens and creates sync issues.
+Same information in SKILL.md and references wastes tokens.
 
-**Bad:**
-```markdown
-# SKILL.md
-## API Reference
-[Full API documentation here...]
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| Full API docs in both SKILL.md and references/api.md | Summary in SKILL.md, details in references/ |
 
-# references/api.md
-## API Reference
-[Same full API documentation here...]
-```
-
-**Good:**
-```markdown
-# SKILL.md
-## API Reference
-For complete API documentation, see [references/api.md](references/api.md).
-
-Quick reference:
-- `create()` - Create new resource
-- `update()` - Modify existing resource
-- `delete()` - Remove resource
-```
-
-**Why it matters:** Duplicates consume double context and diverge over time. Single source of truth with summaries in SKILL.md.
+**Why**: Duplicates consume double context and diverge over time.
 
 ---
 
 ## 7. Kitchen Sink Skills
 
-Skills that try to do everything become unfocused and unreliable.
+Skills that try to do everything become unfocused.
 
-**Bad:**
-```yaml
-name: document-processor
-description: Handle all document types including PDF, DOCX, XLSX, PPTX, images, and text files. Also supports conversion, OCR, and data extraction.
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `document-processor` handling PDF, DOCX, XLSX, images, OCR | `pdf-processor` focused on PDFs only |
 
-**Good:**
-```yaml
-name: pdf-processor
-description: Read, create, and manipulate PDF documents. Use for: form filling, text extraction, page manipulation, and PDF generation.
-```
-
-**Why it matters:** Focused skills have clearer triggers, simpler workflows, and more reliable outputs. Create multiple specialized skills instead.
+**Why**: Focused skills have clearer triggers and more reliable outputs.
 
 ---
 
@@ -196,35 +112,11 @@ description: Read, create, and manipulate PDF documents. Use for: form filling, 
 
 Forcing exact templates when flexibility would produce better results.
 
-**Bad:**
-```markdown
-ALWAYS use this EXACT format:
-# Title
-## Section 1
-## Section 2
-## Section 3
-[No variations allowed]
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "ALWAYS use this EXACT format" | "Typical format (adapt as needed)" |
 
-**Good:**
-```markdown
-## Default Structure
-
-Typical format (adapt as needed):
-# Title
-## Overview
-[Key points]
-
-## Details
-[Expand based on content]
-
-## Next Steps
-[If applicable]
-
-Adjust sections based on the specific content and user needs.
-```
-
-**Why it matters:** Real-world tasks vary. Over-rigid templates produce awkward outputs when content doesn't fit the mold.
+**Why**: Real-world tasks vary. Over-rigid templates produce awkward outputs.
 
 ---
 
@@ -232,27 +124,11 @@ Adjust sections based on the specific content and user needs.
 
 Executing without verification leads to silent failures.
 
-**Bad:**
-```markdown
-## Process
-1. Analyze input
-2. Apply transformation
-3. Done!
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "1. Analyze, 2. Transform, 3. Done!" | Include "4. Validate results, 5. Report summary" |
 
-**Good:**
-```markdown
-## Process
-1. Analyze input
-2. Apply transformation
-3. **Validate results:**
-   - Verify output format matches expectations
-   - Check for regressions or side effects
-   - Confirm all items processed
-4. Report summary with any issues found
-```
-
-**Why it matters:** Validation catches errors before they propagate. Explicit verification steps ensure quality.
+**Why**: Validation catches errors before they propagate.
 
 ---
 
@@ -260,231 +136,95 @@ Executing without verification leads to silent failures.
 
 Embedding environment-specific details that don't generalize.
 
-**Bad:**
-```markdown
-## Setup
-Run: `cd /Users/john/projects/myapp && npm install`
-Edit file at: `/Users/john/projects/myapp/config.json`
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `cd /Users/john/projects/myapp` | "Navigate to project root" with relative paths |
 
-**Good:**
-```markdown
-## Setup
-1. Navigate to project root
-2. Install dependencies: `npm install`
-3. Configure settings in `config.json` at project root
-
-**Note:** Paths are relative to the project directory.
-```
-
-**Why it matters:** Skills should work across environments. Use relative paths and generic instructions.
+**Why**: Skills should work across environments.
 
 ---
 
 ## 11. Inconsistent Naming Conventions
 
-Using placeholders without defining naming rules causes confusion and errors.
+Using placeholders without defining naming rules.
 
-**Bad:** `{Entity}`, `{entity}`, `{ENTITY}` used interchangeably without definition
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `{Entity}`, `{entity}`, `{ENTITY}` used interchangeably | Document conventions: `{Entity}` = PascalCase, `{entity}` = camelCase, etc. |
 
-**Good:**
-```markdown
-## Naming Conventions
-
-This skill uses the following placeholder conventions:
-- `{Entity}` = PascalCase (e.g., "Consumer", "OrderItem")
-- `{entity}` = camelCase (e.g., "consumer", "orderItem")
-- `{ENTITY}` = UPPER_SNAKE (e.g., "CONSUMER", "ORDER_ITEM")
-- `{entity-name}` = kebab-case (e.g., "consumer", "order-item")
-- `{entity_name}` = snake_case (e.g., "consumer", "order_item")
-```
-
-**Why it matters:** Clear naming conventions prevent typos and maintain consistency across generated outputs.
+**Why**: Clear conventions prevent typos and maintain consistency.
 
 ---
 
 ## 12. Technology-Specific Assumptions
 
-Embedding specific technology details that don't apply to all users.
+Embedding specific technology details that don't apply universally.
 
-**Bad:**
-```markdown
-## Setup
-1. Install Node.js and npm
-2. Run `npm install`
-3. Add to your React component
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "Install Node.js, run npm install, add to React" | "Prerequisites: [list]. Installation: [generic or multi-platform]" |
 
-**Good:**
-```markdown
-## Setup
-
-**Prerequisites:** [List required tools/environment]
-
-**Installation:** [Generic steps or multiple options]
-
-**Integration:** [Platform-agnostic guidance OR separate sections per platform]
-```
-
-**Why it matters:** Skills should be adaptable. Provide options or keep instructions generic unless the skill is explicitly technology-specific.
+**Why**: Skills should be adaptable unless explicitly technology-specific.
 
 ---
 
-## 13. Missing "When to Use" in Body
+## 13. Missing Trigger Info in Description
 
-Putting trigger information only in the body, which isn't read until after triggering.
+Putting trigger information only in the body (not read during trigger matching).
 
-**Bad:**
-```markdown
----
-description: Helps with API design
----
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| Vague description + "When to Use" section in body | Specific triggers in description field |
 
-# API Design
-
-## When to Use This Skill
-Use when designing REST APIs, reviewing OpenAPI specs, or...
-```
-
-**Good:**
-```markdown
----
-description: Design REST and GraphQL APIs with best practices. Use when: (1) designing new API endpoints, (2) reviewing OpenAPI specifications, (3) establishing API standards, (4) refactoring existing APIs for consistency.
----
-
-# API Design
-
-[Jump straight into the content - trigger info is in description]
-```
-
-**Why it matters:** The description is read for trigger matching. "When to use" sections in the body are never seen during trigger evaluation.
+**Why**: Body content isn't read during trigger evaluation.
 
 ---
 
 ## 14. No Clear Entry Point
 
-User doesn't know where to start or what to do first.
+User doesn't know where to start.
 
-**Bad:**
-```markdown
-# Complex Skill
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| Jump straight to Feature A, B, C sections | Start with "Quick Start" or "Decision Tree" |
 
-## Feature A
-[Details about A]
-
-## Feature B
-[Details about B]
-
-## Feature C
-[Details about C]
-```
-
-**Good:**
-```markdown
-# Complex Skill
-
-## Quick Start
-
-1. Determine your goal → See Decision Tree below
-2. Gather required input → See User Input Required
-3. Follow the appropriate workflow
-
-## Decision Tree
-
-- Need Feature A? → Jump to [Feature A](#feature-a)
-- Need Feature B? → Jump to [Feature B](#feature-b)
-- Not sure? → Start with [Assessment](#assessment)
-```
-
-**Why it matters:** Clear entry points reduce cognitive load and help users (and Claude) navigate efficiently.
+**Why**: Clear entry points reduce cognitive load.
 
 ---
 
-## 15. Outdated or Broken References
+## 15. Outdated References
 
-Links to non-existent files or outdated information.
+Links to non-existent or outdated files.
 
-**Bad:**
-```markdown
-See [detailed guide](references/old-guide.md) for more info.
-<!-- File doesn't exist or is outdated -->
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| `See [guide](references/old-guide.md)` (broken) | Verify all links exist and are current |
 
-**Good:**
-```markdown
-See [detailed guide](references/current-guide.md) for more info.
-
-<!-- Verify all links exist and are current -->
-```
-
-**Why it matters:** Broken references cause confusion and errors. Validate links during skill development.
+**Why**: Broken references cause confusion and errors.
 
 ---
 
 ## 16. No Error Recovery Guidance
 
-Skills that only cover the happy path leave users stuck when things go wrong.
+Skills that only cover the happy path.
 
-**Bad:**
-```markdown
-## Process
-1. Run the script
-2. Check output
-3. Done
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "Run script, check output, done" | Include troubleshooting table and "If All Else Fails" section |
 
-**Good:**
-```markdown
-## Process
-1. Run the script
-2. Check output
-3. Done
-
-## Troubleshooting
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| FileNotFound | Input missing | Verify file path |
-| PermissionDenied | Insufficient access | Run with elevated permissions |
-| TimeoutError | Slow network | Increase timeout or retry |
-
-## If All Else Fails
-1. Check logs at [location]
-2. Verify prerequisites
-3. Try manual execution: [steps]
-```
-
-**Why it matters:** Error recovery guidance saves time and prevents abandonment when issues occur.
+**Why**: Error recovery guidance saves time when issues occur.
 
 ---
 
-## 17. Assuming Claude Knows Project Context
+## 17. Assuming Project Context
 
 Referencing project-specific details without explanation.
 
-**Bad:**
-```markdown
-Use the standard AppService pattern.
-Register in the module as usual.
-```
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| "Use the standard AppService pattern" | Show the pattern with code example |
 
-**Good:**
-```markdown
-Use the AppService pattern:
-```csharp
-public class ProductAppService : ApplicationService, IProductAppService
-{
-    // Implementation
-}
-```
-
-Register in the module:
-```csharp
-context.Services.AddTransient<IProductAppService, ProductAppService>();
-```
-```
-
-**Why it matters:** Skills should be self-contained. Don't assume Claude remembers project conventions from previous conversations.
+**Why**: Skills should be self-contained.
 
 ---
 

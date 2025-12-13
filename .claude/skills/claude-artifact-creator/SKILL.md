@@ -117,7 +117,7 @@ Claude auto-detects → SKILL (no isolation) or AGENT (with isolation)
 Deterministic on events → HOOK
 ```
 
-**Full decision tree**: See [GUIDELINES.md § Choosing the Right Tool](..\..\GUIDELINES.md#choosing-the-right-tool)
+**Full decision tree**: See [GUIDELINES.md § Choosing the Right Tool](../../GUIDELINES.md#choosing-the-right-tool)
 
 ## Creation Workflow
 
@@ -176,7 +176,7 @@ Claude Code includes built-in agents (cannot be modified):
 
 ⚠️ **Warning**: Omitting `tools` grants ALL tools including MCP. Always whitelist explicitly.
 
-**Full reference**: See [GUIDELINES.md § Agents](..\..\GUIDELINES.md#agents-agents) for tool permissions by role, and [GUIDELINES.md § Hooks](..\..\GUIDELINES.md#hooks) for hook events.
+**Full reference**: See [GUIDELINES.md § Agents](../../GUIDELINES.md#agents-agents) for tool permissions by role, and [GUIDELINES.md § Hooks](../../GUIDELINES.md#hooks) for hook events.
 
 ## Best Practices
 
@@ -204,14 +204,9 @@ See [references/anti-patterns.md](references/anti-patterns.md) for comprehensive
 
 ## Agent Refactoring
 
-When agents grow >150 lines:
+When agents grow >150 lines, extract embedded content to skills, commands, or docs.
 
-| Content | Extract To | Reference As |
-|---------|------------|--------------|
-| Code patterns | Skill | "Apply `skill-name` skill" |
-| Output templates | Skill | "Follow `skill-name` format" |
-| CLI commands | Command | "Use `/command-name`" |
-| Project structure | docs/ | "Read docs/..." |
+**Full guide**: See [agent-refactoring-guide.md](references/agent-refactoring-guide.md)
 
 ## Agent Optimization Patterns
 
@@ -286,7 +281,7 @@ Rule: "Knowing" = Skill, "Doing" = Command
 ## References
 
 **Primary (READ FIRST):**
-- [`.claude/GUIDELINES.md`](..\..\GUIDELINES.md) - **Authoritative meta-knowledge** for all artifact creation
+- [`.claude/GUIDELINES.md`](../../GUIDELINES.md) - **Authoritative meta-knowledge** for all artifact creation
 
 **Skill-Specific:**
 - [references/skills/skill-types.md](references/skills/skill-types.md) - Archetypes

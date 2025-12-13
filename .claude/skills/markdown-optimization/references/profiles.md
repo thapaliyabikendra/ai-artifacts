@@ -19,7 +19,8 @@ docs/features/**               → feature-spec
 .claude/skills/**/*.md         → skill
 .claude/agents/**/*.md         → agent
 .claude/commands/**/*.md       → command
-.claude/guidelines/**          → guidelines-module
+.claude/GUIDELINES.md          → guidelines
+.claude/guidelines/**          → guidelines
 **/*.md (default)              → generic
 ```
 
@@ -348,6 +349,66 @@ You are a [role].
 | Domain knowledge | Reference skill |
 | Complex workflows | Consider agent instead |
 | Repeated patterns | Use command references |
+
+---
+
+## Profile: `guidelines`
+
+**Purpose**: Claude Code organization guidelines ecosystem (GUIDELINES.md + modular guidelines/).
+
+### Constraints
+
+| Document | Max Lines | Rationale |
+|----------|-----------|-----------|
+| GUIDELINES.md | 1,000 | Core reference, always loaded by artifact creator |
+| INDEX.md | 200 | Navigation hub only |
+| patterns/*.md | 400 | Focused design patterns |
+| standards/*.md | 400 | Rules & conventions |
+| examples/*.md | 500 | Good/bad examples with code |
+| workflows/*.md | 400 | How-to guides |
+| reference/*.md | 400 | Lookup tables |
+
+### Expected Structure
+
+```
+.claude/
+├── GUIDELINES.md           # Core (entry point)
+└── guidelines/
+    ├── INDEX.md           # Navigation hub
+    ├── patterns/          # Design patterns
+    ├── standards/         # Rules & conventions
+    ├── examples/          # Good/bad examples
+    ├── workflows/         # How-to guides
+    └── reference/         # Lookup tables
+```
+
+### Additional Validation
+
+Beyond standard checks, the `guidelines` profile validates:
+
+| Check | Description |
+|-------|-------------|
+| **INDEX.md completeness** | All files in `guidelines/` listed in INDEX.md |
+| **Cross-references** | Links between GUIDELINES.md ↔ guidelines/ valid |
+| **Folder structure** | Required folders exist |
+| **Orphan detection** | Files not linked from GUIDELINES.md or INDEX.md |
+
+### Optimization Rules
+
+| Pattern | Action |
+|---------|--------|
+| GUIDELINES.md > 1,000 lines | Extract section to guidelines/ |
+| Section > 200 lines | Split into sub-document |
+| Concept in 2+ places | Consolidate to single location |
+| Missing from INDEX.md | Add entry or delete orphan |
+| Inline examples > 20 lines | Move to examples/ |
+
+### Anti-Patterns
+
+- ❌ Embedding full examples in GUIDELINES.md (link instead)
+- ❌ Duplicating content between GUIDELINES.md and guidelines/
+- ❌ Deep nesting in guidelines/ (max 1 level)
+- ❌ Files not linked from anywhere (orphans)
 
 ---
 

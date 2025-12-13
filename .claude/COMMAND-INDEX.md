@@ -238,9 +238,8 @@ What do you need?
 │
 ├─ Understand code? → /explain:code-explain
 │
-└─ Optimize documentation?
-    ├─ Markdown files → /docs:optimize-md
-    └─ Guidelines → /optimize-guidelines
+└─ Optimize documentation? → /docs:optimize-md
+    (Use `--profile guidelines` for GUIDELINES.md ecosystem)
 ```
 
 ## Argument Patterns

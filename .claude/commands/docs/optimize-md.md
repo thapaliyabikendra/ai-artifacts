@@ -19,110 +19,71 @@ Analyze and optimize markdown files for maintainability, compaction, and structu
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `<path>` | Yes | File, folder, or glob pattern to analyze |
-| `--profile <type>` | No | Force specific profile (auto-detected if omitted) |
-| `--mode <mode>` | No | `audit` (default), `apply`, or `check` |
-| `--max-lines <N>` | No | Override default line limit |
+| `<path>` | Yes | File, folder, or glob pattern |
+| `--profile <type>` | No | Force profile (auto-detected if omitted) |
+| `--mode <mode>` | No | `audit` (default), `apply`, `check` |
+| `--max-lines <N>` | No | Override line limit |
 
 ## Modes
 
-| Mode | Description | Output |
-|------|-------------|--------|
-| `audit` | Analyze and produce report (default) | Markdown report |
-| `apply` | Implement suggested changes (**requires confirmation**) | Modified files |
-| `check` | CI-friendly validation | Exit code 0 (pass) or 1 (fail) |
+| Mode | Description |
+|------|-------------|
+| `audit` | Analyze and produce report (default) |
+| `apply` | Implement changes (**requires confirmation**) |
+| `check` | CI-friendly validation (exit 0/1) |
 
 ## Profiles
 
-Profiles define document-specific rules. Auto-detected from path or use `--profile`:
+Auto-detected from path. See [profiles.md](../../skills/markdown-optimization/references/profiles.md) for full definitions.
 
-| Profile | Auto-Detected From | Max Lines |
-|---------|-------------------|-----------|
-| `claude-md` | `CLAUDE.md`, `*.claude.md` | 300 |
+| Profile | Pattern | Max Lines |
+|---------|---------|-----------|
+| `claude-md` | `**/CLAUDE.md` | 300 |
+| `guidelines` | `.claude/GUIDELINES.md`, `.claude/guidelines/**` | Varies* |
 | `architecture` | `docs/architecture/**` | 500 |
 | `domain` | `docs/domain/**` | 400 |
 | `feature-spec` | `docs/features/**` | 600 |
-| `readme` | `README.md` | 200 |
-| `skill` | `.claude/skills/**/SKILL.md` | 500 |
-| `agent` | `.claude/agents/**/*.md` | 150 |
-| `generic` | Any other `.md` | 500 |
-
-**Custom profiles**: Define in `.claude/config/md-profiles.yaml` (see skill reference).
+| `readme` | `**/README.md` | 200 |
+| `skill` | `.claude/skills/**` | 500 |
+| `agent` | `.claude/agents/**` | 150 |
+| `generic` | Default | 500 |
 
 ## Context
 
-Before analysis, apply the `markdown-optimization` skill for patterns and profiles.
+Apply the `markdown-optimization` skill before analysis for patterns and profile details.
 
-## Execution Flow
+## Execution
 
 ### 1. Parse Arguments
 
-Extract from `$ARGUMENTS`:
-- `path`: Required target (file/folder/glob)
-- `profile`: Optional, auto-detect if not provided
-- `mode`: Default to `audit`
-- `max-lines`: Optional override
+Extract from `$ARGUMENTS`: path (required), profile, mode, max-lines.
 
-### 2. Discover Files
+### 2. Discover & Profile Files
 
-```bash
-# Single file
-if [[ -f "$path" ]]; then files=("$path")
+Use Glob to find `.md` files. Auto-detect profile from path patterns.
 
-# Folder
-elif [[ -d "$path" ]]; then files=$(find "$path" -name "*.md")
-
-# Glob pattern
-else files=$(glob "$path")
-fi
-```
-
-### 3. Auto-Detect Profile (if not specified)
-
-| Path Pattern | Profile |
-|--------------|---------|
-| `**/CLAUDE.md` | `claude-md` |
-| `docs/architecture/**` | `architecture` |
-| `docs/domain/**` | `domain` |
-| `docs/features/**` | `feature-spec` |
-| `**/README.md` | `readme` |
-| `.claude/skills/**` | `skill` |
-| `.claude/agents/**` | `agent` |
-| Default | `generic` |
-
-### 4. Run Analysis
+### 3. Run Analysis
 
 For each file, check:
-
 1. **Size** - Lines vs profile limit
 2. **Structure** - Heading hierarchy, TOC presence
 3. **Duplication** - Repeated content across files
 4. **Links** - Broken internal links
 5. **Compaction** - Prose → table opportunities
 
-### 5. Execute Mode
+**Guidelines profile adds**: INDEX.md completeness, cross-references, folder structure, orphan detection. See [profiles.md](../../skills/markdown-optimization/references/profiles.md#profile-guidelines).
 
-#### Audit Mode (default)
-Generate report without modifications.
+### 4. Execute Mode
 
-#### Apply Mode
-**IMPORTANT**: Before making any changes:
-1. Show proposed changes summary
-2. Use `AskUserQuestion` to confirm:
-   - "Proceed with all changes?"
-   - "Select specific changes to apply"
-   - "Cancel"
+**Audit**: Generate report, no modifications.
 
-Only proceed with explicit user confirmation.
+**Apply**: Show summary → `AskUserQuestion` for confirmation → implement approved changes.
 
-#### Check Mode
-Return exit code:
-- `0` if all files pass limits
-- `1` if any file fails
+**Check**: Return exit 0 (pass) or 1 (fail).
 
-## Output Format
+## Output
 
-### Audit Report
+### Audit Report Structure
 
 ```markdown
 # Markdown Optimization Report
@@ -168,44 +129,34 @@ Return exit code:
 ### Check Output
 
 ```
-✅ PASS: docs/architecture/README.md (245/500 lines)
-✅ PASS: docs/domain/enums.md (89/400 lines)
-❌ FAIL: docs/domain/business-rules.md (620/400 lines)
-❌ FAIL: CLAUDE.md (380/300 lines)
-
-Result: FAILED (2 of 4 files over limit)
+✅ PASS: file.md (245/500 lines)
+❌ FAIL: other.md (620/400 lines)
+Result: FAILED (1 of 2 over limit)
 ```
 
 ## Examples
 
 ```bash
-# Audit CLAUDE.md
+# Basic audit
 /docs:optimize-md CLAUDE.md
-
-# Audit all docs
 /docs:optimize-md docs/
 
-# Apply optimizations with confirmation
+# Apply with confirmation
 /docs:optimize-md docs/domain/ --mode apply
 
 # CI validation
 /docs:optimize-md . --mode check
 
-# Override line limit
-/docs:optimize-md docs/architecture/README.md --max-lines 600
-
-# Force specific profile
+# Force profile / override limit
 /docs:optimize-md my-doc.md --profile architecture
+/docs:optimize-md README.md --max-lines 300
+
+# Guidelines ecosystem
+/docs:optimize-md .claude/GUIDELINES.md
+/docs:optimize-md .claude/guidelines/ --mode check
 ```
 
-## Related Commands
+## Related
 
-- `/optimize-guidelines` - Specialized for GUIDELINES.md (more comprehensive)
-- `/refactor:tech-debt` - Code-focused technical debt analysis
-
-## Skill Reference
-
-Apply the `markdown-optimization` skill for:
-- Detailed profile definitions
-- Compaction patterns and techniques
-- Custom profile configuration
+- `markdown-optimization` skill - Profile definitions, compaction patterns
+- `/refactor:tech-debt` - Code-focused analysis
