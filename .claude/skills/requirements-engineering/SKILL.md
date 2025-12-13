@@ -90,38 +90,26 @@ Then [graceful handling occurs]
 
 ### Business Rule Format
 
-```markdown
-**BR-[XXX]: [Rule Name]**
+> **Full format**: See [domain-modeling](../domain-modeling/SKILL.md#business-rule-format) skill for detailed patterns and categories.
 
-**Description**: [What the rule enforces]
-**Trigger**: [When this rule applies]
-**Condition**: [The logic to evaluate]
-**Action**: [What happens when condition is met/not met]
-**Exception**: [Any exceptions to this rule]
-```
+Quick format for requirements:
+
+| ID | Rule | Enforcement | Impact |
+|----|------|-------------|--------|
+| BR-{CAT}-001 | [Rule description] | [Create/Update/Delete] | [Reject with error] |
 
 ### Data Model Template
 
-```markdown
-## Data Model: [Entity Name]
+> **Full entity modeling**: See [domain-modeling](../domain-modeling/SKILL.md) skill for complete entity definitions with relationships, state transitions, and API access.
 
-### Fields
+Quick format for requirements:
+
 | Field | Type | Required | Constraints | Description |
 |-------|------|----------|-------------|-------------|
 | Id | Guid | Yes | PK | Unique identifier |
 | Name | string | Yes | Max 100 chars | Display name |
 | Email | string | Yes | Valid email, Unique | Contact email |
 | Status | enum | Yes | Active/Inactive | Current state |
-| CreatedAt | DateTime | Yes | Auto-set | Creation timestamp |
-
-### Relationships
-- [Entity] has many [Related Entity] (1:N)
-- [Entity] belongs to [Parent Entity] (N:1)
-
-### Indexes
-- Unique index on Email
-- Index on Status for filtering
-```
 
 ### Process Flow Template
 
