@@ -48,6 +48,150 @@ The context window is a shared resource. Before adding content, ask:
 3. **Review** - Audit against quality checklist and anti-patterns
 4. **Consolidate** - Merge duplicate artifacts into focused ones
 
+---
+
+## Three-Layer Knowledge Architecture
+
+**CRITICAL**: Before creating any knowledge artifact, determine the correct layer.
+
+See [GUIDELINES.md § Three-Layer Knowledge Architecture](../../GUIDELINES.md#three-layer-knowledge-architecture) for full details.
+
+### Quick Decision Flow
+
+```
+Is it a design principle that applies to ANY language?
+│
+├── YES → Create CONCEPT (knowledge/concepts/)
+│         NO CODE, just principles
+│
+└── NO → Is it specific to a language/framework?
+         │
+         ├── YES → Create IMPLEMENTATION (knowledge/implementations/{lang}/)
+         │         CODE EXAMPLES, links to concept
+         │
+         └── NO → Create SKILL (skills/)
+                  ORCHESTRATION, references both
+```
+
+### Creating Concepts
+
+**Location**: `knowledge/concepts/{topic}/{concept}.md`
+
+**Rules**:
+- ✅ Framework-independent principles only
+- ✅ Why it matters (rationale)
+- ✅ How to detect violations (criteria, not code)
+- ❌ NO code examples
+- ❌ NO language-specific syntax
+
+**Template**:
+```yaml
+---
+name: {Concept Name}
+category: {topic}
+implementations:
+  dotnet: ../implementations/dotnet/{file}.md#{anchor}
+  react: ../implementations/react/{file}.md#{anchor}
+used_by_skills: []
+---
+
+# {Concept Name}
+
+> "{Quote or one-liner definition}"
+
+## The Principle
+
+{Framework-independent explanation}
+
+## Why It Matters
+
+{Business/technical rationale}
+
+## How to Detect Violations
+
+- {Detection criteria - NO code}
+- {Observable symptoms}
+
+## Related Concepts
+
+- [{Related Concept}](../{related}/concept.md)
+
+## Implementations
+
+| Language | Guide |
+|----------|-------|
+| C#/.NET | [Link](../../implementations/dotnet/{file}.md) |
+| React | [Link](../../implementations/react/{file}.md) |
+```
+
+### Creating Implementations
+
+**Location**: `knowledge/implementations/{lang}/{file}.md`
+
+**Rules**:
+- ✅ Links to concept(s) it implements
+- ✅ ❌ Bad / ✅ Good code examples
+- ✅ Framework-specific notes
+- ❌ NO principle definitions (link instead)
+- ❌ NO "why" explanations (concept layer)
+
+**Template**:
+```yaml
+---
+implements_concepts:
+  - concepts/{topic}/{concept}
+language: {csharp|typescript|python}
+framework: [{dotnet|react|abp}]
+---
+
+# {Concept Name} in {Language}
+
+## {Concept} {#anchor}
+
+> **Concept**: [{Concept Name}](../../concepts/{topic}/{concept}.md)
+
+### ❌ Violation
+
+```{lang}
+// Code showing anti-pattern
+```
+
+### ✅ Correct
+
+```{lang}
+// Code showing correct implementation
+```
+
+## Framework-Specific Notes
+
+{Any framework-specific considerations}
+```
+
+### Updating Skills for Three-Layer
+
+When creating or updating skills, add these front matter fields:
+
+```yaml
+---
+name: skill-name
+applies_concepts:
+  - knowledge/concepts/{topic}/{concept}
+uses_implementations:
+  - knowledge/implementations/{lang}/{file}
+---
+```
+
+### Governance Checklist
+
+Before creating ANY knowledge artifact:
+
+- [ ] **Concept exists?** If creating implementation, verify concept exists first
+- [ ] **No code in concept?** Concepts must be code-free
+- [ ] **Links bidirectional?** Concept → Implementation, Implementation → Concept
+- [ ] **INDEX updated?** Add to `knowledge/concepts/INDEX.md` or `knowledge/implementations/INDEX.md`
+
+---
+
 ## Quick Start
 
 **Create a skill:**

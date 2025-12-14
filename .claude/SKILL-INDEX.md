@@ -296,9 +296,41 @@ Business analysis and requirements.
 
 **Used by**: `business-analyst`
 
+## Skill → Knowledge Mapping
+
+Skills reference underlying concepts and implementations from the knowledge base.
+
+### By Concept Group
+
+| Concept | Implementation | Skills Using |
+|---------|----------------|--------------|
+| [SOLID Principles](knowledge/concepts/solid/overview.md) | [.NET](knowledge/implementations/dotnet/solid.md) | clean-code-dotnet, abp-code-reviewer, abp-framework-patterns |
+| [Clean Code](knowledge/concepts/clean-code/principles.md) | [.NET](knowledge/implementations/dotnet/clean-code.md) | clean-code-dotnet, code-review-excellence |
+| [Code Smells](knowledge/concepts/code-smells/taxonomy.md) | [.NET](knowledge/implementations/dotnet/code-smells.md) | clean-code-dotnet, abp-code-reviewer, debugging-patterns |
+| [TDD Principles](knowledge/concepts/testing/tdd-principles.md) | [xUnit](knowledge/implementations/dotnet/xunit-tdd.md) | xunit-testing-patterns, qa-engineer |
+| [FIRST Principles](knowledge/concepts/testing/first.md) | [xUnit](knowledge/implementations/dotnet/xunit-tdd.md) | xunit-testing-patterns, qa-engineer |
+| [Test Smells](knowledge/concepts/testing/test-smells.md) | [xUnit](knowledge/implementations/dotnet/xunit-tdd.md) | xunit-testing-patterns, code-review-excellence |
+| [Architecture Layers](knowledge/concepts/clean-architecture/layers.md) | — | abp-framework-patterns, backend-architect |
+| [Dependency Rule](knowledge/concepts/clean-architecture/dependency-rule.md) | — | abp-framework-patterns, abp-code-reviewer |
+| [Architecture Smells](knowledge/concepts/clean-architecture/smells.md) | — | backend-architect, abp-code-reviewer |
+
+### By Skill
+
+| Skill | Concepts | Implementations |
+|-------|----------|-----------------|
+| `clean-code-dotnet` | solid/*, clean-code/*, code-smells/* | dotnet/solid.md, dotnet/clean-code.md, dotnet/code-smells.md |
+| `abp-code-reviewer` | solid/*, code-smells/*, clean-architecture/* | dotnet/solid.md, dotnet/code-smells.md |
+| `xunit-testing-patterns` | testing/* | dotnet/xunit-tdd.md |
+| `qa-engineer` | testing/tdd-principles, testing/first | dotnet/xunit-tdd.md |
+| `code-review-excellence` | clean-code/*, test-smells | dotnet/clean-code.md |
+| `debugging-patterns` | code-smells/taxonomy | dotnet/code-smells.md |
+| `abp-framework-patterns` | solid/srp, solid/dip, clean-architecture/layers | (inline examples) |
+
 ## Cross-References
 
 See also:
 - [CONTEXT-GRAPH.md](CONTEXT-GRAPH.md) - Skill relationships and dependencies
 - [flows/INDEX.md](flows/INDEX.md) - Multi-skill workflows
 - [knowledge/INDEX.md](knowledge/INDEX.md) - Shared knowledge base
+- [knowledge/concepts/INDEX.md](knowledge/concepts/INDEX.md) - All concepts (framework-independent)
+- [knowledge/implementations/INDEX.md](knowledge/implementations/INDEX.md) - All implementations (with code)

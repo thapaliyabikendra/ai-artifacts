@@ -153,6 +153,250 @@ A tiered system for knowledge discovery and sharing between skills.
 
 ---
 
+## Three-Layer Knowledge Architecture
+
+Separates **concepts** (framework-independent principles) from **implementations** (language-specific patterns).
+
+### The Three Layers
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    LAYER 1: CONCEPTS                                 │
+│                 (Framework-Independent)                              │
+│                                                                     │
+│  "WHAT is the principle?" "WHY does it matter?"                     │
+│  NO CODE - just principles, rationale, detection criteria           │
+│                                                                     │
+│  concepts/solid/srp.md, concepts/clean-code/naming.md               │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ "How is this done in X?"
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                  LAYER 2: IMPLEMENTATIONS                            │
+│                 (Language/Framework-Specific)                        │
+│                                                                     │
+│  CODE EXAMPLES showing how to apply concepts in specific context    │
+│  Links back to concepts it implements                               │
+│                                                                     │
+│  implementations/dotnet/solid.md, implementations/react/hooks.md    │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Orchestrates both
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     LAYER 3: SKILLS                                  │
+│                  (Context-Aware Orchestration)                       │
+│                                                                     │
+│  References concepts + implementations, adds context                 │
+│  "When to use", "How it fits with this project"                     │
+│                                                                     │
+│  skills/clean-code-dotnet/SKILL.md                                  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Directory Structure
+
+```
+knowledge/
+├── concepts/                          # LAYER 1: Pure principles
+│   ├── INDEX.md                       # Concept registry + implementation links
+│   ├── clean-code/                    # Grouped by topic
+│   │   ├── principles.md
+│   │   ├── naming.md
+│   │   └── functions.md
+│   ├── solid/
+│   │   ├── overview.md
+│   │   ├── srp.md
+│   │   └── ...
+│   ├── clean-architecture/
+│   ├── code-smells/
+│   ├── testing/
+│   └── refactoring/
+│
+├── implementations/                   # LAYER 2: Language-specific
+│   ├── INDEX.md                       # Implementation registry
+│   ├── dotnet/
+│   │   ├── clean-code.md
+│   │   ├── solid.md
+│   │   └── xunit.md
+│   └── react/
+│       ├── clean-code.md
+│       └── jest.md
+│
+├── conventions/                       # Project conventions (existing)
+├── patterns/                          # ABP patterns (existing)
+└── examples/                          # Complete examples (existing)
+```
+
+### Layer Rules
+
+#### CONCEPTS (`knowledge/concepts/`)
+
+**Must contain:**
+- Principle definition (framework-independent)
+- Why it matters (rationale)
+- How to detect violations
+- Related concepts links
+- Implementation links (in front matter)
+
+**Must NOT contain:**
+- Code examples (no code!)
+- Framework-specific details
+- Language-specific syntax
+
+**Format:**
+```yaml
+---
+name: Single Responsibility Principle
+category: solid
+implementations:
+  dotnet: ../implementations/dotnet/solid.md#srp
+  react: ../implementations/react/solid.md#srp
+used_by_skills: [clean-code-dotnet, code-review-excellence]
+---
+
+# Single Responsibility Principle
+
+> "A class should have one, and only one, reason to change."
+
+## The Principle
+[Framework-independent explanation]
+
+## Why It Matters
+[Rationale]
+
+## How to Detect Violations
+- [Detection criteria - no code]
+
+## See Also
+- **Implementations**: [.NET](#) | [React](#)
+```
+
+#### IMPLEMENTATIONS (`knowledge/implementations/{lang}/`)
+
+**Must contain:**
+- Link to concept(s) it implements
+- Language-specific code examples (❌ Bad / ✅ Good)
+- Framework-specific notes
+
+**Must NOT contain:**
+- Principle definitions (link to concepts instead)
+- "Why" explanations (that's concept layer)
+
+**Format:**
+```yaml
+---
+implements_concepts:
+  - concepts/solid/srp
+  - concepts/solid/ocp
+language: csharp
+framework: [dotnet, abp]
+---
+
+# SOLID in C#
+
+## SRP - Single Responsibility {#srp}
+
+> **Concept**: [Single Responsibility Principle](../../concepts/solid/srp.md)
+
+### ❌ Violation
+```csharp
+// Code showing anti-pattern
+```
+
+### ✅ Correct
+```csharp
+// Code showing correct implementation
+```
+```
+
+#### SKILLS (`skills/{name}/`)
+
+**Must contain:**
+- References to concepts (in front matter)
+- References to implementations (in front matter)
+- Orchestration context ("When to use", "How it fits")
+
+**Should NOT contain:**
+- Embedded principle definitions (link to concepts)
+- Duplicated code examples (link to implementations)
+
+**Format:**
+```yaml
+---
+name: clean-code-dotnet
+applies_concepts:
+  - knowledge/concepts/clean-code/principles
+  - knowledge/concepts/solid/overview
+uses_implementations:
+  - knowledge/implementations/dotnet/clean-code
+  - knowledge/implementations/dotnet/solid
+---
+
+# Clean Code .NET
+
+Apply [Clean Code Principles](../../knowledge/concepts/clean-code/principles.md)
+in C#/.NET projects.
+
+## When to Use
+[Contextual guidance]
+
+## Quick Reference
+See [C# Implementation](../../knowledge/implementations/dotnet/clean-code.md)
+```
+
+### Concept Registry (INDEX.md)
+
+Both layers have INDEX.md files for discovery:
+
+**`knowledge/concepts/INDEX.md`:**
+```markdown
+| Concept | Definition | .NET | React | Python |
+|---------|------------|------|-------|--------|
+| SOLID | [solid/overview.md] | [✓](../implementations/dotnet/solid.md) | - | - |
+| Clean Code | [clean-code/principles.md] | [✓](../implementations/dotnet/clean-code.md) | [✓](../implementations/react/clean-code.md) | - |
+```
+
+### Decision Flow: What to Create
+
+```
+User requests new knowledge artifact
+              │
+              ▼
+┌─────────────────────────────────────┐
+│ Does it apply to ANY language?      │
+│ (No code, just principle)           │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┐
+       │ YES           │ NO
+       ▼               ▼
+   CONCEPT      ┌─────────────────────┐
+   (concepts/)  │ Is it specific to   │
+                │ a language/framework?│
+                └──────────┬──────────┘
+                           │
+                   ┌───────┴───────┐
+                   │ YES           │ NO
+                   ▼               ▼
+             IMPLEMENTATION    SKILL
+             (implementations/) (skills/)
+```
+
+### Migration Path
+
+Existing skills with embedded concepts should be migrated:
+
+1. **Extract concepts** → `knowledge/concepts/{topic}/`
+2. **Extract code examples** → `knowledge/implementations/{lang}/`
+3. **Update skill** → Reference both via front matter
+4. **Remove duplicated content** from skill
+
+**Migrate on touch**: When updating a skill, migrate its embedded content.
+
+---
+
 ## Agents
 
 Agents are AI personas with specialized capabilities. Organized **by role** (what they ARE).
