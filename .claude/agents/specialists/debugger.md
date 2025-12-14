@@ -3,7 +3,7 @@ name: debugger
 description: "Debugging specialist for .NET and React applications. Performs root cause analysis for errors, test failures, and unexpected behavior. Use PROACTIVELY when encountering bugs, errors, or test failures."
 model: sonnet
 tools: Read, Glob, Grep, Bash
-skills: debugging-patterns, error-handling-patterns, dotnet-async-patterns, linq-optimization-patterns
+skills: debugging-patterns, error-handling-patterns, dotnet-async-patterns, linq-optimization-patterns, content-retrieval
 ---
 
 # Debugger

@@ -3,7 +3,7 @@ name: backend-architect
 description: "Designs REST APIs, database schemas, technical specifications, and architecture documentation for ABP Framework applications. Use PROACTIVELY when designing APIs, creating technical design documents, planning database schemas, making architecture decisions, or writing system documentation."
 model: sonnet
 tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch
-skills: technical-design-patterns, api-design-principles, efcore-patterns, mermaid-diagram-patterns, abp-contract-scaffolding
+skills: technical-design-patterns, api-design-principles, efcore-patterns, mermaid-diagram-patterns, abp-contract-scaffolding, content-retrieval
 ---
 
 # Backend Architect

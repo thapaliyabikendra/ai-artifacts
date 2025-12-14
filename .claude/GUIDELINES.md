@@ -12,12 +12,15 @@ This document defines the structure, conventions, and decision framework for org
 2. [Directory Structure](#directory-structure)
 3. [Choosing the Right Tool](#choosing-the-right-tool)
 4. [Knowledge Architecture](#knowledge-architecture)
-5. [Agents](#agents)
-6. [Skills](#skills)
-7. [Commands](#commands)
-8. [Hooks](#hooks)
-9. [Output Styles](#output-styles)
-10. [Quick Reference](#quick-reference)
+   - [Content Retrieval Protocol](#content-retrieval-protocol)
+   - [Queryable Markdown Standard](#queryable-markdown-qmd-standard)
+5. [Three-Layer Knowledge Architecture](#three-layer-knowledge-architecture)
+6. [Agents](#agents)
+7. [Skills](#skills)
+8. [Commands](#commands)
+9. [Hooks](#hooks)
+10. [Output Styles](#output-styles)
+11. [Quick Reference](#quick-reference)
 
 ---
 
@@ -150,6 +153,72 @@ A tiered system for knowledge discovery and sharing between skills.
 | **4 - Workflows** | Orchestration | feature-development-workflow |
 
 **Rule**: Load Layer 1-2 dependencies before Layer 3-4 skills.
+
+### Content Retrieval Protocol
+
+Token-efficient retrieval rules. **Never full-read when partial suffices.**
+
+| Depth | Need | Method | Lines |
+|-------|------|--------|-------|
+| L0 | Exists? | `Grep(output: files_with_matches)` | ~1 |
+| L1 | Count? | `Grep(output: count)` | ~1 |
+| L2 | Lookup | `Grep(pattern, -C:2)` | ~5 |
+| L3 | Overview | `Read(limit: 40)` | ~40 |
+| L4 | Section | Grep heading → Read(offset, limit) | ~50 |
+| L5 | Full | `Read()` - justify first | All |
+
+**Section Extraction** (markdown-native):
+```
+1. Grep("^## Section Name$", file) → line 15
+2. Grep("^---|^## ", file, offset: 16) → end at line 30
+3. Read(file, offset: 15, limit: 15)
+```
+
+**Full skill**: [content-retrieval](skills/content-retrieval/SKILL.md)
+
+### Queryable Markdown (QMD) Standard
+
+**Markdown-native** structure using headings and horizontal rules:
+
+```markdown
+---
+name: identifier
+description: "One-line (< 100 chars)"
+layer: 1-4
+keywords: [grep, targets]
+---
+
+# Title
+
+## Summary
+
+2-3 sentences. Quick understanding.
+
+---
+
+## Quick Reference
+
+| Pattern | Usage |
+|---------|-------|
+
+---
+
+## Patterns
+
+Detailed content...
+
+---
+
+## Related
+
+- [link](path)
+```
+
+**Section Detection**: `## Heading` starts section, `---` or next `## ` ends it.
+
+**Reserved Headings**: `## Summary`, `## Quick Reference`, `## Scope`, `## Patterns`, `## Related`
+
+**Frontmatter**: Max 20 lines. Required: `name`, `description`, `layer`, `keywords`.
 
 ---
 

@@ -4,7 +4,7 @@ description: "QA engineer for .NET and React applications. Creates test plans, w
 model: sonnet
 tools: Read, Write, Edit, Bash, Glob, Grep
 permissionMode: acceptEdits
-skills: xunit-testing-patterns, e2e-testing-patterns, javascript-testing-patterns
+skills: xunit-testing-patterns, e2e-testing-patterns, javascript-testing-patterns, content-retrieval
 understands:
   - testing/tdd-principles            # Red-Green-Refactor cycle
   - testing/first                     # FIRST test principles

@@ -3,7 +3,7 @@ name: business-analyst
 description: "Analyzes requirements and manages domain knowledge for ABP Framework applications. Maintains entity definitions, business rules, and permissions. Creates impact analysis for audit trails. Use PROACTIVELY when adding features, analyzing requirements, updating domain logic, creating user stories, or assessing change impact."
 model: opus
 tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch
-skills: requirements-engineering, domain-modeling, mermaid-diagram-patterns
+skills: requirements-engineering, domain-modeling, mermaid-diagram-patterns, content-retrieval
 ---
 
 # Business Analyst

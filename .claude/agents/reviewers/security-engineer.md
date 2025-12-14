@@ -3,7 +3,7 @@ name: security-engineer
 description: "Security engineer for web applications. Conducts security audits, threat modeling (STRIDE), and OWASP compliance checks. Use PROACTIVELY when reviewing security, implementing authentication, or auditing code for vulnerabilities."
 model: opus
 tools: Read, Glob, Grep, WebSearch, WebFetch
-skills: security-patterns, abp-framework-patterns, openiddict-authorization
+skills: security-patterns, abp-framework-patterns, openiddict-authorization, content-retrieval
 ---
 
 # Security Engineer
