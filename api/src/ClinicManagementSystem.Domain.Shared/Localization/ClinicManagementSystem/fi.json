@@ -1,9 +1,0 @@
-{
-  "culture": "fi",
-  "texts": {
-    "AppName": "ClinicManagementSystem",
-    "Menu:Home": "Koti",
-    "Welcome": "Tervetuloa",
-    "LongWelcomeMessage": "Tervetuloa sovellukseen. Tämä on ABP-kehykseen perustuva käynnistysprojekti. Lisätietoja on osoitteessa abp.io."
-  }
-}

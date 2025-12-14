@@ -1,9 +1,0 @@
-﻿using ClinicManagementSystem.EntityFrameworkCore;
-using Xunit;
-
-namespace ClinicManagementSystem.EntityFrameworkCore;
-
-public class ClinicManagementSystemEntityFrameworkCoreCollectionFixtureBase : ICollectionFixture<ClinicManagementSystemEntityFrameworkCoreFixture>
-{
-
-}

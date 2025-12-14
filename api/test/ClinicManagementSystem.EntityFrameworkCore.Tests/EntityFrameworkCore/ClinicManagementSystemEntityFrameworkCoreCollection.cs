@@ -1,9 +1,0 @@
-﻿using Xunit;
-
-namespace ClinicManagementSystem.EntityFrameworkCore;
-
-[CollectionDefinition(ClinicManagementSystemTestConsts.CollectionDefinitionName)]
-public class ClinicManagementSystemEntityFrameworkCoreCollection : ICollectionFixture<ClinicManagementSystemEntityFrameworkCoreFixture>
-{
-
-}
