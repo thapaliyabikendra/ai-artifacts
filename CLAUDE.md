@@ -19,6 +19,35 @@ Guidance for Claude Code when working with this repository.
 | Validation | FluentValidation (NOT data annotations) |
 | Testing | xUnit + Shouldly + NSubstitute |
 
+## Git Rules — STRICT MODE
+
+### NEVER
+- `push --force`, `reset --hard`, `clean -fd`, or delete branches
+- Commit to `main`, `master`, or protected branches
+- Rebase shared branches
+- Commit secrets, `.env`, or `appsettings.*.json` with sensitive data
+
+### ALWAYS
+- Create feature branch: `ai/<description>`
+- Check: `git status`, `git diff`, verify branch before commit
+- Pull (no rebase) before push
+- Push only feature branches
+
+### COMMIT FORMAT
+```
+<type>: <what>
+
+Why:
+* <reason>
+```
+
+### STOP IF
+- On protected branch
+- Git errors/conflicts
+- Unclear state
+
+> **Safety > Speed. Agent is not the repo owner.**
+
 ## Quick Reference
 
 | Action | Command |

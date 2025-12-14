@@ -48,7 +48,23 @@
       "Bash(head:*.env*)",
       "Bash(tail:*secrets*.json)",
       "Bash(tail:*credentials*.json)",
-      "Bash(tail:*.env*)"
+      "Bash(tail:*.env*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean*)",
+      "Bash(git clean -fd*)",
+      "Bash(git rebase*)",
+      "Bash(git cherry-pick*)",
+      "Bash(git revert*)",
+      "Bash(git branch -d*)",
+      "Bash(git branch -D*)",
+      "Bash(git checkout main)",
+      "Bash(git checkout master)",
+      "Bash(git checkout release*)",
+      "Bash(git checkout production*)",
+      "Bash(git merge*)"
     ]
   },
   "outputStyle": "Careful Assistant",
@@ -70,6 +86,26 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $path = $input.tool_input.file_path; if ($path -match 'Migrations[\\\\/][^\\\\]+\\.cs$' -and $path -notmatch 'DbContextModelSnapshot') { Write-Output '{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"ask\\\",\\\"permissionDecisionReason\\\":\\\"WARNING: Editing migration files can cause data loss or schema conflicts. Consider creating a new migration instead.\\\"}}' }\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $cmd = $input.tool_input.command; if ($cmd -match 'git (add|commit|push)' ) { $branch = git branch --show-current 2>$null; if ($branch -match '^(main|master|release|production)$') { Write-Error \\\"BLOCKED: Git write operation on protected branch '$branch'\\\"; exit 2 } } exit 0\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $cmd = $input.tool_input.command; if ($cmd -match 'git (commit|push)' ) { $branch = git branch --show-current; if ($branch -notmatch '^ai/') { Write-Error \\\"BLOCKED: Branch '$branch' does not follow ai/* naming rule\\\"; exit 2 } } exit 0\"",
             "timeout": 5
           }
         ]
