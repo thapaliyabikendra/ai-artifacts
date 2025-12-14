@@ -1,6 +1,6 @@
 # Command Index
 
-Centralized command discovery. 26 commands organized by action.
+Centralized command discovery. 27 commands organized by action.
 
 ## Quick Lookup by Task
 
@@ -14,6 +14,7 @@ Centralized command discovery. 26 commands organized by action.
 | Create API mocks | `/generate:api-mock` | `<api-spec>` |
 | Run TDD cycle | `/tdd:tdd-cycle` | `"<feature>" [--phase red\|green\|refactor]` |
 | Audit permissions | `/review:permissions` | `[--unused] [--matrix]` |
+| Review before push | `/review:pre-push` | `[--no-block] [--base <branch>]` |
 | Audit tech stack | `/review:tech-stack-audit` | `[--fix] [--skills]` |
 | Debug an error | `/debug:smart-debug` | `"<error>" [--fix]` |
 | Analyze tech debt | `/refactor:tech-debt` | `[<path>]` |
@@ -79,6 +80,7 @@ Centralized command discovery. 26 commands organized by action.
 | Command | Purpose | Arguments |
 |---------|---------|-----------|
 | `/review:permissions` | Audit ABP permissions | `[--unused] [--unprotected] [--matrix]` |
+| `/review:pre-push` | Fast security scan before push (<30s) | `[--no-block] [--base <branch>]` |
 | `/review:tech-stack-audit` | Audit skills for wrong tech | `[--fix] [--skills] [--commands] [--verbose]` |
 
 ### Debugging
@@ -133,6 +135,7 @@ Code quality and testing commands.
 | `/qa:coverage-report` | Analyze test coverage gaps |
 | `/qa:generate-tests` | Auto-generate tests for untested code |
 | `/review:permissions` | Permission audit |
+| `/review:pre-push` | AI review before git push |
 | `/refactor:tech-debt` | Technical debt analysis |
 | `/refactor:refactor-clean` | Code cleanup and refactoring |
 
@@ -185,6 +188,7 @@ Commands that orchestrate specialized agents:
 | `/feature:add-feature` | business-analyst → backend-architect → abp-developer → qa-engineer → abp-code-reviewer → security-engineer | haiku → haiku → sonnet → haiku → haiku → haiku |
 | `/debug:smart-debug` | debugger → abp-developer → qa-engineer → abp-code-reviewer | sonnet → sonnet → haiku → haiku |
 | `/tdd:tdd-cycle` | qa-engineer → abp-developer → abp-code-reviewer | sonnet → sonnet → haiku |
+| `/review:pre-push` | (none - direct execution) | haiku |
 | `/generate:entity` | abp-developer | sonnet |
 | `/generate:migration` | database-migrator | sonnet |
 
@@ -224,6 +228,7 @@ What do you need?
 │   └─ Refactor only → /tdd:tdd-cycle --phase refactor
 │
 ├─ Review/audit?
+│   ├─ Before push → /review:pre-push
 │   ├─ Permissions → /review:permissions
 │   ├─ Tech debt → /refactor:tech-debt
 │   └─ Dependencies → /refactor:deps-audit
@@ -282,6 +287,7 @@ Commands reference detailed patterns in `.claude/commands/references/`:
 | Reference | Used By |
 |-----------|---------|
 | `api-mock-templates.md` | `/generate:api-mock` |
+| `pre-push-templates.md` | `/review:pre-push` |
 | `refactor-patterns.md` | `/refactor:refactor-clean` |
 | `code-explain-templates.md` | `/explain:code-explain` |
 | `deps-audit-patterns.md` | `/refactor:deps-audit` |

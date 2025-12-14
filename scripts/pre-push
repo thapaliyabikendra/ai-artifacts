@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+#
+# Git Pre-Push Hook - AI Code Review
+#
+# This hook runs Claude Code review before pushing changes.
+# It blocks the push if CRITICAL issues are found.
+#
+# INSTALLATION:
+#   cp pre-push .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#
+# OPTIONS (via environment variables):
+#   CLAUDE_REVIEW_QUICK=1    - Quick mode (security + performance only)
+#   CLAUDE_REVIEW_NOBLOCK=1  - Never block push (warnings only)
+#   CLAUDE_REVIEW_FORMAT=X   - Output format: terminal|markdown|checklist
+#   CLAUDE_REVIEW_SKIP=1     - Skip review entirely
+#
+# BRANCH FILTER:
+#   Only feat/* branches are reviewed
+#   All other branches (hotfix/*, release/*, etc.) skip review
+#
+# BYPASS:
+#   git push --no-verify     - Skip this hook entirely
+#
+
+set -e
+
+remote="$1"
+url="$2"
+
+# Skip if explicitly disabled
+if [ "${CLAUDE_REVIEW_SKIP:-0}" = "1" ]; then
+  echo "⏭️  Skipping Claude review (CLAUDE_REVIEW_SKIP=1)"
+  exit 0
+fi
+
+# Skip if Claude is not installed
+if ! command -v claude >/dev/null 2>&1; then
+  echo "⚠️  Claude CLI not found, skipping AI review"
+  echo "   Install: npm install -g @anthropic-ai/claude-code"
+  exit 0
+fi
+
+# Calculate zero hash for comparisons
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+
+# Check if branch should be reviewed (only feat/* branches)
+should_review_branch() {
+  local branch_name="$1"
+  branch_name="${branch_name#refs/heads/}"
+
+  [[ "$branch_name" == feat/* ]]
+}
+
+# Build command options
+OPTIONS=""
+
+if [ "${CLAUDE_REVIEW_QUICK:-0}" = "1" ]; then
+  OPTIONS="$OPTIONS --quick"
+fi
+
+if [ "${CLAUDE_REVIEW_NOBLOCK:-0}" = "1" ]; then
+  OPTIONS="$OPTIONS --no-block"
+fi
+
+if [ -n "${CLAUDE_REVIEW_FORMAT}" ]; then
+  OPTIONS="$OPTIONS --format ${CLAUDE_REVIEW_FORMAT}"
+fi
+
+echo ""
+echo "🤖 Claude Pre-Push Review"
+echo "─────────────────────────"
+
+# Elapsed timer display function
+# Shows running time so users know the process isn't hung
+show_elapsed_timer() {
+  local start=$SECONDS
+  while true; do
+    local elapsed=$((SECONDS - start))
+    local mins=$((elapsed / 60))
+    local secs=$((elapsed % 60))
+    printf "\r   ⏱️  Reviewing... %02d:%02d elapsed" $mins $secs
+    sleep 1
+  done
+}
+
+# Cleanup function to kill timer on exit
+cleanup_timer() {
+  if [ -n "$TIMER_PID" ] && kill -0 $TIMER_PID 2>/dev/null; then
+    kill $TIMER_PID 2>/dev/null
+    wait $TIMER_PID 2>/dev/null || true  # Ignore exit code from killed process
+  fi
+  printf "\r                                    \r"
+}
+
+# Process each ref being pushed
+while read local_ref local_oid remote_ref remote_oid; do
+  # Skip branch deletion
+  if [ "$local_oid" = "$zero" ]; then
+    continue
+  fi
+
+  # Only review feat/* branches
+  if ! should_review_branch "$local_ref"; then
+    echo "⏭️  Skipping review for non-feat branch: ${local_ref#refs/heads/}"
+    continue
+  fi
+
+  # Determine base for comparison
+  if [ "$remote_oid" = "$zero" ]; then
+    # New branch - compare against develop
+    BASE="origin/develop"
+  else
+    # Existing branch - compare against remote
+    BASE="$remote_oid"
+  fi
+
+  # Check if there are changes
+  CHANGED_FILES=$(git diff --name-only "$BASE..$local_oid" 2>/dev/null | wc -l)
+
+  if [ "$CHANGED_FILES" -eq 0 ]; then
+    echo "✅ No changes to review for $local_ref"
+    continue
+  fi
+
+  echo ""
+  echo "🔍 Reviewing: $local_ref → $remote_ref"
+  echo "   Files changed: $CHANGED_FILES"
+  echo ""
+  echo "┌──────────────────────────────────────────────────┐"
+  echo "│  ⏳ Claude AI is analyzing your code...          │"
+  echo "│     This typically takes 30-90 seconds.          │"
+  echo "│     Watch the timer below for progress.          │"
+  echo "└──────────────────────────────────────────────────┘"
+  echo ""
+
+  # Start elapsed timer in background
+  show_elapsed_timer &
+  TIMER_PID=$!
+  
+  echo ""
+
+  # Ensure timer is cleaned up on script exit
+  trap cleanup_timer EXIT
+
+  # Run Claude review command
+  # The command will exit 2 if CRITICAL issues found (in blocking mode)
+  # IMPORTANT: Redirect stdin from /dev/null to prevent claude from consuming
+  # the stdin that the while-read loop needs for processing git refs
+  claude -p "/review:pre-push --base $BASE $OPTIONS" < /dev/null
+  CLAUDE_EXIT_CODE=$?
+
+  # Stop the timer
+  cleanup_timer
+  trap - EXIT
+  TIMER_PID=""
+
+  echo ""
+
+  if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
+    if [ $CLAUDE_EXIT_CODE -eq 2 ]; then
+      echo ""
+      echo "❌ Push blocked due to CRITICAL issues."
+      echo ""
+      echo "   Options:"
+      echo "   1. Fix the issues and retry"
+      echo "   2. git push --no-verify (bypass, not recommended)"
+      echo "   3. CLAUDE_REVIEW_NOBLOCK=1 git push (review without blocking)"
+      echo ""
+      exit 2
+    else
+      echo ""
+      echo "⚠️  Review encountered an error (exit code: $CLAUDE_EXIT_CODE)"
+      echo "   Allowing push to continue..."
+    fi
+  fi
+
+done
+
+echo ""
+echo "✅ Claude review complete"
+exit 0
