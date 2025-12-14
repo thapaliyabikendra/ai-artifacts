@@ -1,2 +1,2 @@
 [alias]
-        fpush = push --no-verify
+        nvpush = push --no-verify

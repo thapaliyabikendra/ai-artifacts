@@ -1,0 +1,141 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/settings.schema.json",
+  "_comment": "Default settings for AI Artifacts. These will be merged with your existing settings.",
+ 
+  "permissions": {
+    "allow": [
+      "Bash(read:*)",
+      "Bash(list:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:./*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(tree:*)"
+    ],
+    "deny": [
+      "Bash(read:*secrets*.json)",
+      "Bash(read:*secret*.json)",
+      "Bash(read:*credentials*.json)",
+      "Bash(read:*.env*)",
+      "Bash(read:.env*)",
+      "Bash(read:*config/secrets*)",
+      "Bash(read:*config/credentials*)",
+      "Bash(read:*.pem)",
+      "Bash(read:*.key)",
+      "Bash(read:*.p12)",
+      "Bash(read:*.pfx)",
+      "Bash(read:*private*key*)",
+      "Bash(read:*id_rsa*)",
+      "Bash(read:*id_dsa*)",
+      "Bash(read:*id_ecdsa*)",
+      "Bash(read:*id_ed25519*)",
+      "Bash(read:.ssh/*)",
+      "Bash(read:*.ppk)",
+      "Bash(read:*password*)",
+      "Bash(read:*token*)",
+      "Bash(read:*.keystore)",
+      "Bash(read:*.jks)",
+      "Bash(cat:*secrets*.json)",
+      "Bash(cat:*secret*.json)",
+      "Bash(cat:*credentials*.json)",
+      "Bash(cat:*.env*)",
+      "Bash(cat:.env*)",
+      "Bash(cat:*config/secrets*)",
+      "Bash(cat:*config/credentials*)",
+      "Bash(cat:*.pem)",
+      "Bash(cat:*.key)",
+      "Bash(head:*secrets*.json)",
+      "Bash(head:*credentials*.json)",
+      "Bash(head:*.env*)",
+      "Bash(tail:*secrets*.json)",
+      "Bash(tail:*credentials*.json)",
+      "Bash(tail:*.env*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean*)",
+      "Bash(git clean -fd*)",
+      "Bash(git rebase*)",
+      "Bash(git cherry-pick*)",
+      "Bash(git revert*)",
+      "Bash(git branch -d*)",
+      "Bash(git branch -D*)",
+      "Bash(git checkout main)",
+      "Bash(git checkout master)",
+      "Bash(git checkout release*)",
+      "Bash(git checkout production*)",
+      "Bash(git merge*)"
+    ]
+  },
+  "outputStyle": "Careful Assistant",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $path = $input.tool_input.file_path; $blocked = @('\\obj\\', '\\bin\\', '.Designer.cs', '.g.cs', 'AssemblyInfo.cs', 'appsettings.secrets.json', 'appsettings.Production.json', '.env', 'package-lock.json', 'yarn.lock', '\\.git\\'); foreach ($pattern in $blocked) { if ($path -like \"*$pattern*\") { Write-Error \\\"BLOCKED: Cannot modify protected file: $path\\\"; exit 2 } }; exit 0\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $path = $input.tool_input.file_path; if ($path -match 'Migrations[\\\\/][^\\\\]+\\.cs$' -and $path -notmatch 'DbContextModelSnapshot') { Write-Output '{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"permissionDecision\\\":\\\"ask\\\",\\\"permissionDecisionReason\\\":\\\"WARNING: Editing migration files can cause data loss or schema conflicts. Consider creating a new migration instead.\\\"}}' }\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $cmd = $input.tool_input.command; if ($cmd -match 'git (add|commit|push)' ) { $branch = git branch --show-current 2>$null; if ($branch -match '^(main|master|release|production)$') { Write-Error \\\"BLOCKED: Git write operation on protected branch '$branch'\\\"; exit 2 } } exit 0\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $cmd = $input.tool_input.command; if ($cmd -match 'git (commit|push)' ) { $branch = git branch --show-current; if ($branch -notmatch '^ai/') { Write-Error \\\"BLOCKED: Branch '$branch' does not follow ai/* naming rule\\\"; exit 2 } } exit 0\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$input = $Input | ConvertFrom-Json; $path = $input.tool_input.file_path; if ($path -match '\\.cs$' -and $path -notmatch '\\\\obj\\\\|\\\\bin\\\\|\\.Designer\\.cs|\\.g\\.cs|Migrations\\\\') { if (Test-Path $path) { $output = & csharpier format $path 2>&1; if ($LASTEXITCODE -eq 0) { Write-Output '{\\\"suppressOutput\\\":true}' } } }\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"Import-Module BurntToast -ErrorAction SilentlyContinue; $input = $Input | ConvertFrom-Json; $type = $input.notification_type; $msg = $input.message; if ($type -eq 'permission_prompt') { New-BurntToastNotification -Text 'Claude Code - Permission Needed', $msg -Sound 'Default' } elseif ($type -eq 'idle_prompt') { New-BurntToastNotification -Text 'Claude Code - Input Needed', 'Claude is waiting for your response' -Sound 'Default' }\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

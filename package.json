@@ -1,0 +1,46 @@
+{
+  "name": "ai-artifacts",
+  "version": "1.0.0",
+  "description": "Claude Code agents, skills, and commands for ABP Framework development",
+  "main": "src/installer.js",
+  "bin": {
+    "claude-abp": "./bin/claude-abp.js"
+  },
+  "scripts": {
+    "test": "node src/installer.js --help"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "abp",
+    "abp-framework",
+    "dotnet",
+    "ai-agents",
+    "code-assistant"
+  ],
+  "author": "Bikendra Thapaliya",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thapaliyabikendra/ai-artifacts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thapaliyabikendra/ai-artifacts/issues"
+  },
+  "homepage": "https://github.com/thapaliyabikendra/ai-artifacts#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "scripts/",
+    "fragments/",
+    ".claude/",
+    "VERSION",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}
