@@ -5,6 +5,12 @@ model: sonnet
 tools: Read, Write, Edit, Bash, Glob, Grep
 permissionMode: acceptEdits
 skills: xunit-testing-patterns, e2e-testing-patterns, javascript-testing-patterns
+understands:
+  - testing/tdd-principles            # Red-Green-Refactor cycle
+  - testing/first                     # FIRST test principles
+  - testing/test-smells               # Test anti-patterns to avoid
+applies:
+  - dotnet/xunit-tdd                  # xUnit TDD patterns
 ---
 
 # QA Engineer

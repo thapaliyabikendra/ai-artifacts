@@ -5,6 +5,17 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 permissionMode: acceptEdits
 skills: abp-framework-patterns, abp-entity-patterns, abp-service-patterns, abp-infrastructure-patterns, efcore-patterns, linq-optimization-patterns, dotnet-async-patterns, error-handling-patterns, csharp-advanced-patterns, fluentvalidation-patterns, openiddict-authorization
+understands:
+  - solid/srp
+  - solid/ocp
+  - solid/dip
+  - clean-code/naming
+  - clean-code/functions
+  - clean-architecture/layers
+  - clean-architecture/dependency-rule
+applies:
+  - dotnet/solid
+  - dotnet/clean-code
 ---
 
 # ABP Developer Agent

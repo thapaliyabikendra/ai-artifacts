@@ -397,6 +397,80 @@ Existing skills with embedded concepts should be migrated:
 
 ---
 
+## Artifact Knowledge Rules
+
+Governance rules for how each artifact type relates to the knowledge base.
+
+### Rules by Artifact Type
+
+| Artifact | Must | Must Not |
+|----------|------|----------|
+| **Skill** | Reference concepts/implementations via front matter | Duplicate code patterns >10 lines inline |
+| **Agent** | Declare knowledge profile (`understands`/`applies`) | List skills without concept mapping |
+| **Command** | Delegate domain logic to skills | Contain inline patterns or business rules |
+| **Hook** | Stay procedural (shell scripts) | Embed framework-specific knowledge |
+
+### Agent Knowledge Profiles
+
+Agents declare what concepts they understand and what implementations they can apply:
+
+```yaml
+---
+name: agent-name
+description: "..."
+tools: Read, Write, Edit
+model: sonnet
+skills: skill1, skill2
+understands:                    # Concepts (framework-independent)
+  - solid/srp
+  - solid/dip
+  - clean-code/naming
+  - clean-architecture/layers
+applies:                        # Implementations (language-specific code)
+  - dotnet/solid
+  - dotnet/clean-code
+---
+```
+
+### Field Definitions
+
+| Field | Purpose | Format | Validation |
+|-------|---------|--------|------------|
+| `understands` | Concepts the agent knows | Paths relative to `knowledge/concepts/` | Must exist in concepts INDEX |
+| `applies` | Implementations the agent uses | Paths relative to `knowledge/implementations/` | Must exist in implementations INDEX |
+
+### Role Requirements
+
+| Role | `understands` (min) | `applies` (min) | Rationale |
+|------|---------------------|-----------------|-----------|
+| `reviewers/` | 3 | 1 | Need to detect violations |
+| `engineers/` | 2 | 2 | Need to write correct code |
+| `architects/` | 3 | 0 | Design focus, less implementation |
+| `specialists/` | 1 | 0 | Domain-specific, flexible |
+
+### Wildcard Support
+
+Use `*` to include all concepts in a category:
+
+```yaml
+understands:
+  - solid/*              # All SOLID concepts
+  - clean-code/*         # All clean code concepts
+  - testing/tdd-principles  # Single specific concept
+```
+
+### Validation
+
+The `claude-artifact-creator` skill validates:
+1. All concept paths exist in `knowledge/concepts/INDEX.md`
+2. All implementation paths exist in `knowledge/implementations/INDEX.md`
+3. Agents meet minimum requirements for their role category
+4. Skills reference knowledge instead of duplicating it
+
+**Cross-reference**: See [ARTIFACT-KNOWLEDGE-MATRIX.md](ARTIFACT-KNOWLEDGE-MATRIX.md) for full coverage.
+
+---
+
 ## Agents
 
 Agents are AI personas with specialized capabilities. Organized **by role** (what they ARE).

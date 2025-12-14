@@ -371,6 +371,62 @@ For comprehensive agent optimization, see [agent-optimization-patterns.md](refer
 - [ ] Agent size <150 lines
 ```
 
+## Agent Knowledge Profiles
+
+Agents declare their knowledge profile in YAML front matter to enable validation and discoverability.
+
+See [GUIDELINES.md § Artifact Knowledge Rules](../../GUIDELINES.md#artifact-knowledge-rules) for full governance.
+
+### Required Front Matter Fields
+
+| Field | Purpose | Format |
+|-------|---------|--------|
+| `understands` | Concepts agent knows | List of paths relative to `knowledge/concepts/` |
+| `applies` | Implementations agent uses | List of paths relative to `knowledge/implementations/` |
+
+### Example
+
+```yaml
+---
+name: abp-developer
+understands:
+  - solid/srp
+  - solid/dip
+  - clean-code/naming
+  - clean-architecture/layers
+applies:
+  - dotnet/solid
+  - dotnet/clean-code
+---
+```
+
+### Validation Rules
+
+1. **Path validation**: All `understands` paths must exist in `knowledge/concepts/INDEX.md`
+2. **Path validation**: All `applies` paths must exist in `knowledge/implementations/INDEX.md`
+3. **Wildcard support**: Use `solid/*` to include all concepts in a category
+4. **Role requirements**: Agents must meet minimum counts for their category
+
+### Role Requirements
+
+| Role (folder) | `understands` (min) | `applies` (min) |
+|---------------|---------------------|-----------------|
+| `reviewers/` | 3 | 1 |
+| `engineers/` | 2 | 2 |
+| `architects/` | 3 | 0 |
+| `specialists/` | 1 | 0 |
+
+### Validation Checklist
+
+When creating or updating agents:
+
+- [ ] All `understands` paths exist in concepts INDEX
+- [ ] All `applies` paths exist in implementations INDEX
+- [ ] Agent meets minimum requirements for its role category
+- [ ] Skills align with knowledge profile (related domains)
+
+**Cross-reference**: See [ARTIFACT-KNOWLEDGE-MATRIX.md](../../ARTIFACT-KNOWLEDGE-MATRIX.md) for full coverage.
+
 ## Success Metrics
 
 Track these for artifact quality:

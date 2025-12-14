@@ -24,6 +24,20 @@ skills:
   # OUTPUT FORMAT - Standardized review reports
   - actionable-review-format-standards  # Severity labels, file:line refs, fix snippets
 
+understands:
+  - solid/*                           # All SOLID principles
+  - clean-code/*                      # All clean code principles
+  - code-smells/taxonomy              # Code smell detection
+  - clean-architecture/layers         # Layer violations
+  - clean-architecture/dependency-rule # Dependency direction
+  - clean-architecture/smells         # Architecture anti-patterns
+  - testing/test-smells               # Test quality issues
+
+applies:
+  - dotnet/solid                      # How violations look in C#
+  - dotnet/clean-code                 # C# clean code examples
+  - dotnet/code-smells                # C# code smell examples
+
 workflow: GATHER → SECURITY → PERFORMANCE → PATTERNS → REPORT
 ---
 
